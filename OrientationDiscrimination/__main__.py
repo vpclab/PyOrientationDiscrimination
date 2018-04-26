@@ -82,7 +82,7 @@ class OrientationDiscriminationTester():
 		self.mon.setDistance(self.config['monitor_distance'])  # Measure first to ensure this is correct
 		self.mon.setWidth(self.config['monitor_width'])  # Measure first to ensure this is correct
 
-		self.win = visual.Window(fullscr=False, monitor='testMonitor', allowGUI=False, units='deg')
+		self.win = visual.Window(fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
 
 		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=6, size=4, mask='gauss')
 		fixationVertices = (
