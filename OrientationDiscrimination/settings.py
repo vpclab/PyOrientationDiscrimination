@@ -9,29 +9,29 @@ import configparser
 
 settingGroups = {
 	'General settings': [ 
-		['Session ID', ''],
+		['Session ID (ex: Day1_Initials)', ''],
 		['Skip settings dialog', False],
-		['Always show help', False],
-		['Data filename', 'data/PCD_{start_time}_Day1_{session_id}'],
+		['Data filename', 'data/PCSF_{start_time}_{session_id}'],
 	],
 	'Display settings': [
 		['Monitor width (cm)', 40],
 		['Monitor distance (cm)', 57],
 		['Fixation size (arcmin)', 20],
 	],
-	'Experiment settings': [
-		['Trials per condition', 25],
-		['Eccentricities (degrees)', '4 8 12'],
-		['Orientations (degrees)', '45 67.5 90 112.5 135'],
-	],
 	'Stimuli settings': [
-		['Stimulus angle (degrees)', 45],
+		['Eccentricities (degrees)', '4 8 12'],
+		['Orientations (degrees)', '45 90 135'],
+		['Stimulus position angles (degrees)', '45 135 225 315'],
+		['Trials per stimulus config', 24],
 		['Stimulus duration (ms)', 200],
-		['Time between stimuli (ms)', 500],
+		['Time between stimuli (ms)', 1000],
+		['Max stimulus angle (deg)', 10],
+		['Stimulus angle precision (deg)', 0.5],
+		['Stimulus contrast', 0.5],
 	],
 	'Input settings': [
-		['First stimulus key', 'left'],
-		['Second stimulus key', 'right']
+		['Rotated left key', 'left'],
+		['Rotated right key', 'right']
 	]
 }
 
@@ -101,7 +101,7 @@ def getSettings(save=True):
 	# GUI
 	if not settings['skip_settings_dialog']:
 		# build the dialog
-		settingsDialog = psychopy.gui.Dlg(title='qCSF Settings')
+		settingsDialog = psychopy.gui.Dlg(title='Orientation Discrimination Settings')
 
 		for group, fields in settingGroups.items():
 			settingsDialog.addText(f'<h3 style="text-align:left;weight:bold">{group}</h3>')
