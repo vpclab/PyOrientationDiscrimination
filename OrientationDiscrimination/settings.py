@@ -73,7 +73,7 @@ def getSettings(save=True):
 			settings[fieldName] = value
 
 	# Saved parameters
-	settingsFile = os.path.join('settings.ini')
+	settingsFile = os.path.join('OrientationDiscrimination Settings.ini')
 	try: 
 		#savedInfo = filetools.fromFile(settingsFile)
 		savedInfo = configparser.ConfigParser()

@@ -238,7 +238,12 @@ class OrientationDiscriminationTester():
 			self.showInstructions(blockCounter==0)
 			# Run each trial in this block
 			for trial in block['trials']:
+				self.fixationStim.autoDraw = True
+				self.win.flip()
+				time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between trials
 				self.runTrial(trial, stepHandlers[trial.orientation])
+
+			self.fixationStim.autoDraw = False
 
 			# Write output
 			for orientation in self.config['orientations']:
@@ -246,7 +251,7 @@ class OrientationDiscriminationTester():
 				self.writeOutput(block['eccentricity'], orientation, result)
 
 			# Take a break if it's time
-			self.fixationStim.autoDraw = False
+			win.flip()
 			if blockCounter < len(self.blocks)-1:
 				logging.debug('Break time')
 				self.takeABreak()
@@ -254,10 +259,6 @@ class OrientationDiscriminationTester():
 		logging.debug('User is done!')
 
 	def runTrial(self, trial, stepHandler):
-		self.fixationStim.autoDraw = True
-		self.win.flip()
-		time.sleep(.25)
-
 		orientationOffset = stepHandler.next()
 
 		logging.info(f'Presenting eccentricity={trial.eccentricity}, orientation={trial.orientation}, stimAngleOffset={orientationOffset}')
@@ -308,6 +309,7 @@ class OrientationDiscriminationTester():
 		except Exception as exc:
 			logging.error(exc)
 
+		self.fixationStim.autoDraw = False
 		self.showFinishedMessage()
 		self.win.close()
 		event.clearEvents()
