@@ -120,10 +120,10 @@ class OrientationDiscriminationTester():
 		leftKey = self.config['rotated_left_key']
 		rightKey = self.config['rotated_right_key']
 
-		instructions = 'In this experiment, you will be presented with two options - one will be blank, and the other will be a stimulus.\n\n'
-		instructions += 'A tone will play when each option is displayed. After both tones, you will need to select which option contained the stimulus.\n\n'
-		instructions += 'If the stimulus appeared during the FIRST tone, press [' + leftKey.upper() + '].\n'
-		instructions += 'If the stimulus appeared during the SECOND tone, press [' + rightKey.upper() + '].\n\n'
+		instructions = 'In this experiment, you will be presented with two images, one at a time and in different locations.\n\n'
+		instructions += 'The second image is the same as the first excepted rotated slightly to the left or slightly to the right.\n\n'
+		instructions += 'If the second image is rotated to the left, press [' + leftKey.upper() + '].\n'
+		instructions += 'If the second image is rotated to the right, press [' + rightKey.upper() + '].\n\n'
 		instructions += 'During the process, keep your gaze fixated on the small cross at the center of the screen.\n\n'
 		instructions += 'If you are uncertain, make a guess.\n\n\nPress any key to start.'
 		
