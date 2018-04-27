@@ -84,7 +84,7 @@ class OrientationDiscriminationTester():
 
 		self.win = visual.Window(fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
 
-		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=6, size=4, mask='gauss')
+		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=self.config['stimulus_frequency'], size=self.config['stimulus_size'], mask='gauss')
 		fixationVertices = (
 			(0, -0.5), (0, 0.5),
 			(0, 0),
@@ -160,10 +160,8 @@ class OrientationDiscriminationTester():
 		self.win.flip()
 
 		keys = []
-		while not 'space' in keys:
+		while not ('space' in keys or 'escape' in keys):
 			keys = event.waitKeys()
-			if 'escape' in keys:
-				raise UserExit()
 
 	def checkResponse(self, whichDirection):
 		leftKey = self.config['rotated_left_key']

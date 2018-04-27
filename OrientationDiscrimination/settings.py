@@ -19,8 +19,8 @@ settingGroups = {
 		['Fixation size (arcmin)', 20],
 	],
 	'Stimuli settings': [
-		['Eccentricities (degrees)', '4 8 12'],
-		['Orientations (degrees)', '45 90 135'],
+		['Eccentricities (degrees)', '2 4 6'],
+		['Orientations (degrees)', '0 45 135'],
 		['Stimulus position angles (degrees)', '45 135 225 315'],
 		['Trials per stimulus config', 24],
 		['Stimulus duration (ms)', 200],
@@ -28,6 +28,8 @@ settingGroups = {
 		['Max stimulus angle (deg)', 10],
 		['Stimulus angle precision (deg)', 0.5],
 		['Stimulus contrast', 0.5],
+		['Stimulus frequency (cpd)', 6],
+		['Stimulus size (degrees of visual angle)', 4],
 	],
 	'Input settings': [
 		['Rotated left key', 'left'],
