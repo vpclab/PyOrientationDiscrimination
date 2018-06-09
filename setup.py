@@ -9,7 +9,7 @@ setup(
 	author='Dominic Canare',
 	author_email='dom@greenlightgo.org',
 	url='http://greenlightgo.org',
-	packages=['BestPest'],
+	packages=['OrientationDiscrimination'],
 	install_requires=[
 		'psychopy==1.90.1'
 	],
