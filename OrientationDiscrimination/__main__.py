@@ -13,7 +13,7 @@ psychopy.prefs.general['audioLib'] = ['pyo','pygame', 'sounddevice']
 from psychopy import core, visual, gui, data, event, monitors, sound
 import numpy
 
-import BestPest, settings
+import BestPest, settings, assets
 
 class Trial():
 	def __init__(self, eccentricity, orientation, stimPositionAngles):
@@ -32,14 +32,9 @@ class UserExit(Exception):
 		super().__init__('User asked to quit.')
 
 def getSound(filename, freq, duration):
-	if getattr(sys, 'frozen', False):
-		rootDir = sys._MEIPASS
-	else:
-		rootDir = '.'
-
-	filename = os.path.join(rootDir, filename)
-
 	try:
+		filename = os.path.join('assets', 'OrientationDiscrimination', filename)
+		filename = assets.getFilePath(filename)
 		return sound.Sound(filename)
 	except ValueError:
 		logging.warning(f'Failed to load sound file: {filename}. Synthesizing sound instead.')
@@ -53,10 +48,9 @@ def getConfig():
 		else:
 			config[k] = [float(config[k])]
 
-	config['sitmulusTone'] = getSound('OrientationDiscrimination/assets/600Hz_square_25.wav', 600, .185)
-	config['positiveFeedback'] = getSound('OrientationDiscrimination/assets/1000Hz_sine_50.wav', 1000, .077)
-	config['negativeFeedback'] = getSound('OrientationDiscrimination/assets/300Hz_sine_25.wav', 300, .2)
-	
+	config['sitmulusTone'] = getSound('600Hz_square_25.wav', 600, .185)
+	config['positiveFeedback'] = getSound('1000Hz_sine_50.wav', 1000, .077)
+	config['negativeFeedback'] = getSound('300Hz_sine_25.wav', 300, .2)
 	config['start_time'] = data.getDateStr()
 
 	return config
