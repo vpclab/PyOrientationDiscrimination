@@ -1,4 +1,4 @@
-appName = 'OrientationDiscrimination'
+appName = 'PyOrientationDiscrimination'
 oneFile = False
 debugMode = False
 block_cipher = None

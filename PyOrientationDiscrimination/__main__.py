@@ -33,7 +33,7 @@ class UserExit(Exception):
 
 def getSound(filename, freq, duration):
 	try:
-		filename = os.path.join('assets', 'OrientationDiscrimination', filename)
+		filename = os.path.join('assets', 'PyOrientationDiscrimination', filename)
 		filename = assets.getFilePath(filename)
 		return sound.Sound(filename)
 	except ValueError:
