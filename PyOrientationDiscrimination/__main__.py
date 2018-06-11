@@ -41,7 +41,7 @@ def getSound(filename, freq, duration):
 		return sound.Sound(freq, secs=duration)
 
 def getConfig():
-	config = settings.getSettings()
+	config = settings.getSettings('OrientationDiscrimination Settings.ini')
 	for k in ['eccentricities', 'orientations', 'stimulus_position_angles']:
 		if isinstance(config[k], str):
 			config[k] = [float(v) for v in config[k].split(' ')]

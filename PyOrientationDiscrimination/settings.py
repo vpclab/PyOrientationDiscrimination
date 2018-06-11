@@ -11,7 +11,7 @@ settingGroups = {
 	'General settings': [ 
 		['Session ID (ex: Day1_Initials)', ''],
 		['Skip settings dialog', False],
-		['Data filename', 'data/PCSF_{start_time}_{session_id}'],
+		['Data filename', 'data/OD_{start_time}_{session_id}'],
 	],
 	'Display settings': [
 		['Monitor width (cm)', 40],
@@ -49,8 +49,9 @@ def formatLabel(label):
 def formattedLabelToFieldName(label):
 	return labelToFieldName(label[label.index('<span>')+6:-7])
 
-def parseArguments():
+def parseArguments(defaultSettingsFile):
 	parser = argparse.ArgumentParser()
+	parser.add_argument('--config', default=defaultSettingsFile)
 
 	for _, fields in settingGroups.items():
 		for field in fields:
@@ -65,7 +66,7 @@ def parseArguments():
 
 	return vars(args)
 
-def getSettings(save=True):
+def getSettings(settingsFile='settings.ini', save=True):
 	settings = {}
 	# Defaults
 	for group, fields in settingGroups.items():
@@ -74,10 +75,12 @@ def getSettings(save=True):
 			fieldName = labelToFieldName(label)
 			settings[fieldName] = value
 
+	# Load command line arguments early, in case the settings file is specified
+	commandLineArgs = parseArguments(settingsFile)
+
 	# Saved parameters
-	settingsFile = os.path.join('OrientationDiscrimination Settings.ini')
+	settingsFile = commandLineArgs.get('config')
 	try: 
-		#savedInfo = filetools.fromFile(settingsFile)
 		savedInfo = configparser.ConfigParser()
 		savedInfo.read(settingsFile)
 		for _,section in savedInfo.items():
@@ -87,8 +90,7 @@ def getSettings(save=True):
 	except:  # if not there then use a default set
 		pass
 
-	# Command line arguments
-	commandLineArgs = parseArguments()
+	# Process the command line arguments last - they should override everything except GUI options
 	for k,v in commandLineArgs.items():
 		if v is not None:
 			try:
@@ -103,7 +105,7 @@ def getSettings(save=True):
 	# GUI
 	if not settings['skip_settings_dialog']:
 		# build the dialog
-		settingsDialog = psychopy.gui.Dlg(title='Orientation Discrimination Settings')
+		settingsDialog = psychopy.gui.Dlg(title='qCSF Settings')
 
 		for group, fields in settingGroups.items():
 			settingsDialog.addText(f'<h3 style="text-align:left;weight:bold">{group}</h3>')
