@@ -230,12 +230,10 @@ class OrientationDiscriminationTester():
 			self.showInstructions(blockCounter==0)
 			# Run each trial in this block
 			for trial in block['trials']:
-				self.fixationStim.autoDraw = True
+				self.fixationStim.draw()
 				self.win.flip()
 				time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between trials
 				self.runTrial(trial, stepHandlers[trial.orientation])
-
-			self.fixationStim.autoDraw = False
 
 			# Write output
 			for orientation in self.config['orientations']:
@@ -274,6 +272,7 @@ class OrientationDiscriminationTester():
 			time.sleep(self.config['stimulus_duration']/1000.0)
 
 			# Pause between stimuli in this pair
+			self.fixationStim.draw()
 			self.win.flip()
 			if i == 0:
 				self.stim.ori += orientationOffset * whichDirection
@@ -301,7 +300,6 @@ class OrientationDiscriminationTester():
 		except Exception as exc:
 			logging.error(exc)
 
-		self.fixationStim.autoDraw = False
 		self.showFinishedMessage()
 		self.win.close()
 		event.clearEvents()
