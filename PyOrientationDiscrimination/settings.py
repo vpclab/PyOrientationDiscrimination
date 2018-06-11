@@ -105,7 +105,7 @@ def getSettings(settingsFile='settings.ini', save=True):
 	# GUI
 	if not settings['skip_settings_dialog']:
 		# build the dialog
-		settingsDialog = psychopy.gui.Dlg(title='qCSF Settings')
+		settingsDialog = psychopy.gui.Dlg(title='OrientationDiscrimination Settings')
 
 		for group, fields in settingGroups.items():
 			settingsDialog.addText(f'<h3 style="text-align:left;weight:bold">{group}</h3>')
