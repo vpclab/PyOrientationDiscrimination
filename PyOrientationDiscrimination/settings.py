@@ -32,8 +32,10 @@ settingGroups = {
 		['Stimulus size (degrees of visual angle)', 4],
 	],
 	'Input settings': [
-		['Rotated left key', 'left'],
-		['Rotated right key', 'right']
+		['Rotated left key', 'num_4'],
+		['Rotated right key', 'num_6'],
+		['Rotated left key label', '1'],
+		['Rotated right key label', '2'],
 	]
 }
 

@@ -111,8 +111,8 @@ class OrientationDiscriminationTester():
 		return BestPest.BestPest(stimSpace)
 
 	def showInstructions(self, firstTime=False):
-		leftKey = self.config['rotated_left_key']
-		rightKey = self.config['rotated_right_key']
+		leftKey = self.config['rotated_left_key_label']
+		rightKey = self.config['rotated_right_key_label']
 
 		instructions = 'In this experiment, you will be presented with two images, one at a time and in different locations.\n\n'
 		instructions += 'The second image is the same as the first excepted rotated slightly to the left or slightly to the right.\n\n'
