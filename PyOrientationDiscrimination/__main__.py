@@ -272,7 +272,6 @@ class OrientationDiscriminationTester():
 			time.sleep(self.config['stimulus_duration']/1000.0)
 
 			# Pause between stimuli in this pair
-			self.fixationStim.draw()
 			self.win.flip()
 			if i == 0:
 				self.stim.ori += orientationOffset * whichDirection
