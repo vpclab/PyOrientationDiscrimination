@@ -60,8 +60,6 @@ def getConfig():
 
 class OrientationDiscriminationTester():
 	def __init__(self, config):
-		os.makedirs('data', exist_ok=True)
-
 		self.config = config
 
 		sound.init()
@@ -304,6 +302,7 @@ class OrientationDiscriminationTester():
 		event.clearEvents()
 		core.quit()
 
+os.makedirs('data', exist_ok=True)
 config = getConfig()
 tester = OrientationDiscriminationTester(config)
 tester.start()
