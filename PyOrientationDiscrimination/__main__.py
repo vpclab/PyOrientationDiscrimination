@@ -42,6 +42,10 @@ def getSound(filename, freq, duration):
 
 def getConfig():
 	config = settings.getSettings('OrientationDiscrimination Settings.ini')
+	config['start_time'] = data.getDateStr()
+	logFile = config['data_filename'].format(**config) + '.log'
+	logging.basicConfig(filename=logFile, level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
 	for k in ['eccentricities', 'orientations', 'stimulus_position_angles']:
 		if isinstance(config[k], str):
 			config[k] = [float(v) for v in config[k].split(' ')]
@@ -51,7 +55,6 @@ def getConfig():
 	config['sitmulusTone'] = getSound('600Hz_square_25.wav', 600, .185)
 	config['positiveFeedback'] = getSound('1000Hz_sine_50.wav', 1000, .077)
 	config['negativeFeedback'] = getSound('300Hz_sine_25.wav', 300, .2)
-	config['start_time'] = data.getDateStr()
 
 	return config
 
@@ -60,9 +63,6 @@ class OrientationDiscriminationTester():
 		os.makedirs('data', exist_ok=True)
 
 		self.config = config
-
-		logFile = self.config['data_filename'].format(**self.config) + '.log'
-		logging.basicConfig(filename=logFile, level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 		sound.init()
 
