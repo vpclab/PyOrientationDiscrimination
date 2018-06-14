@@ -1,4 +1,5 @@
 import sys, os, platform
+import traceback
 import argparse
 import time, random
 import logging
@@ -10,7 +11,7 @@ import psychopy
 
 psychopy.prefs.general['audioLib'] = ['pyo','pygame', 'sounddevice']
 
-from psychopy import core, visual, gui, data, event, monitors, sound
+from psychopy import core, visual, gui, data, event, monitors, sound, tools
 import numpy
 
 import BestPest, settings, assets
@@ -65,6 +66,7 @@ class OrientationDiscriminationTester():
 		sound.init()
 
 		self.setupMonitor()
+		self.setupHUD()
 		self.setupDataFile()
 		
 		self.setupBlocks()
@@ -75,6 +77,7 @@ class OrientationDiscriminationTester():
 		self.mon.setWidth(self.config['monitor_width'])  # Measure first to ensure this is correct
 
 		self.win = visual.Window(fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
+		self.mon.setSizePix(self.win.size)
 
 		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=self.config['stimulus_frequency'], size=self.config['stimulus_size'], mask='gauss')
 		fixationVertices = (
@@ -83,6 +86,62 @@ class OrientationDiscriminationTester():
 			(-0.5, 0), (0.5, 0),
 		)
 		self.fixationStim = visual.ShapeStim(self.win, vertices=fixationVertices, lineColor=-1, closeShape=False, size=self.config['fixation_size']/60.0)
+
+	def setTopLeftPos(self, stim, pos):
+		# convert pixels to degrees
+		stimDim = stim.boundingBox
+		screenDim = self.mon.getSizePix()
+		centerPos = [
+			pos[0] + (stimDim[0] - screenDim[0]) / 2,
+			(screenDim[1] - stimDim[1]) / 2 - pos[1],
+		]
+		stim.pos = centerPos
+
+	def updateHUD(self, item, text, color=None):
+		element, pos, labelText = self.hudElements[item]
+		element.text = text
+		self.setTopLeftPos(element, pos)
+		if color != None:
+			element.color = color
+
+	def setupHUD(self):
+		lineHeight = 40
+		xOffset = 225
+		yOffset = 10
+
+		self.hudElements = OrderedDict(
+			lastStim = [visual.TextStim(self.win, text=' '), [xOffset, 0 + yOffset], 'Last stim'],
+			lastResp = [visual.TextStim(self.win, text=' '), [xOffset + 40, lineHeight + yOffset], None],
+			lastOk = [visual.TextStim(self.win, text=' '), [xOffset -10, lineHeight + yOffset], 'Last resp'],
+			thisStim = [visual.TextStim(self.win, text=' '), [xOffset, 2*lineHeight + yOffset], 'This stim'],
+			expectedResp = [visual.TextStim(self.win, text=' '), [xOffset, 3*lineHeight + yOffset], 'Exp resp'],
+		)
+
+		for key in list(self.hudElements):
+			stim, pos, labelText = self.hudElements[key]
+			if labelText is not None:
+				label = visual.TextStim(self.win, text=labelText+':')
+				pos = [30, pos[1]]
+				self.hudElements[key+'_label'] = [label, pos, None]
+
+		for key in list(self.hudElements):
+			stim, pos, labelText = self.hudElements[key]
+
+			stim.color = 1
+			stim.units = 'pix'
+			stim.height = lineHeight * .88
+			stim.wrapWidth = 9999
+			self.setTopLeftPos(stim, pos)
+
+	def enableHUD(self):
+		for key, hudArgs in self.hudElements.items():
+			stim, pos, labelText = hudArgs
+			stim.autoDraw = True
+
+	def disableHUD(self):
+		for key, hudArgs in self.hudElements.items():
+			stim, pos, labelText = hudArgs
+			stim.autoDraw = False
 
 	def setupDataFile(self):
 		self.dataFilename = self.config['data_filename'].format(**self.config) + '.csv'
@@ -144,10 +203,11 @@ class OrientationDiscriminationTester():
 			if 'escape' in keys:
 				raise UserExit()
 
-	def showFinishedMessage(self):
-		instructions = 'Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.'
-		instructionsStim = visual.TextStim(self.win, text=instructions, color=-1, wrapWidth=20)
-		instructionsStim.draw()
+	def showFinishedMessage(self, text=None):
+		if text is None:
+			text = 'Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.'
+		textStim = visual.TextStim(self.win, text=text, color=-1, wrapWidth=20)
+		textStim.draw()
 
 		self.win.flip()
 
@@ -159,14 +219,19 @@ class OrientationDiscriminationTester():
 		leftKey = self.config['rotated_left_key']
 		rightKey = self.config['rotated_right_key']
 
+		leftKeyLabel = self.config['rotated_left_key_label']
+		rightKeyLabel = self.config['rotated_right_key_label']
+
 		correct = None
 		while correct is None:
 			keys = event.waitKeys()
 			logging.debug(f'Keys detected: {keys}')
 			if leftKey in keys:
+				self.updateHUD('lastResp', leftKeyLabel)
 				logging.info(f'User selected left ({leftKey})')
 				correct = (whichDirection < 0)
 			if rightKey in keys:
+				self.updateHUD('lastResp', rightKeyLabel)
 				logging.info(f'User selected right ({rightKey})')
 				correct = (whichDirection > 0)
 			if 'q' in keys or 'escape' in keys:
@@ -227,12 +292,14 @@ class OrientationDiscriminationTester():
 			# Show instructions
 			self.showInstructions(blockCounter==0)
 			# Run each trial in this block
+			self.enableHUD()
 			for trial in block['trials']:
 				self.fixationStim.draw()
 				self.win.flip()
 				time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between trials
 				self.runTrial(trial, stepHandlers[trial.orientation])
 
+			self.disableHUD()
 			# Write output
 			for orientation in self.config['orientations']:
 				result = stepHandlers[orientation].getBestPest()
@@ -254,6 +321,10 @@ class OrientationDiscriminationTester():
 
 		whichDirection = random.choice([-1, 1])
 		logging.info(f'Correct direction = {whichDirection}')
+
+		stimString = 'O:%.2f+%.2f, E:%.2f, P:[%.2f, %.2f]' % (trial.orientation, orientationOffset, trial.eccentricity, *trial.stimPositionAngles)
+		self.updateHUD('thisStim', stimString)
+		self.updateHUD('expectedResp', whichDirection)
 
 		self.stim.ori = trial.orientation
 		for i in range(2):
@@ -277,11 +348,16 @@ class OrientationDiscriminationTester():
 
 
 		correct = self.checkResponse(whichDirection)
+		self.updateHUD('lastStim', stimString)
+		self.updateHUD('thisStim', '')
+
 		if correct:
 			logging.debug('Correct response')
+			self.updateHUD('lastOk', '✔', (-1, 1, -1))
 			self.config['positiveFeedback'].play()
 		else:
 			logging.debug('Incorrect response')
+			self.updateHUD('lastOk', '✘', (1, -1, -1))
 			self.config['negativeFeedback'].play()
 
 		self.win.flip()
@@ -295,7 +371,11 @@ class OrientationDiscriminationTester():
 		except UserExit as exc:
 			logging.info(exc)
 		except Exception as exc:
-			logging.error(exc)
+			print(exc)
+			traceback.print_exc()
+			logging.critical(exc)
+			self.showFinishedMessage('Something went wrong!\n\nPlease let the research assistant know.')
+
 
 		self.showFinishedMessage()
 		self.win.close()
