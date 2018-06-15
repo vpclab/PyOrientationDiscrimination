@@ -306,7 +306,7 @@ class OrientationDiscriminationTester():
 				self.writeOutput(block['eccentricity'], orientation, result)
 
 			# Take a break if it's time
-			win.flip()
+			self.win.flip()
 			if blockCounter < len(self.blocks)-1:
 				logging.debug('Break time')
 				self.takeABreak()
