@@ -324,7 +324,12 @@ class OrientationDiscriminationTester():
 
 		stimString = 'O:%.2f+%.2f, E:%.2f, P:[%.2f, %.2f]' % (trial.orientation, orientationOffset, trial.eccentricity, *trial.stimPositionAngles)
 		self.updateHUD('thisStim', stimString)
-		self.updateHUD('expectedResp', whichDirection)
+
+		expectedLabels = {
+			-1: self.config['rotated_left_key_label'],
+			1: self.config['rotated_right_key_label'],
+		}
+		self.updateHUD('expectedResp', expectedLabels[whichDirection])
 
 		self.stim.ori = trial.orientation
 		for i in range(2):
