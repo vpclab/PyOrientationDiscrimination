@@ -172,7 +172,7 @@ class OrientationDiscriminationTester():
 		rightKey = self.config['rotated_right_key_label']
 
 		instructions = 'In this experiment, you will be presented with two images, one at a time and in different locations.\n\n'
-		instructions += 'The second image is the same as the first excepted rotated slightly to the left or slightly to the right.\n\n'
+		instructions += 'The second image is the same as the first except rotated slightly to the left or slightly to the right.\n\n'
 		instructions += 'If the second image is rotated to the left, press [' + leftKey.upper() + '].\n'
 		instructions += 'If the second image is rotated to the right, press [' + rightKey.upper() + '].\n\n'
 		instructions += 'During the process, keep your gaze fixated on the small cross at the center of the screen.\n\n'
