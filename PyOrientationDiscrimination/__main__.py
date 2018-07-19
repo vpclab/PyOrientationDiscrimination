@@ -15,6 +15,7 @@ from psychopy import core, visual, gui, data, event, monitors, sound, tools
 import numpy
 
 import BestPest, settings, assets
+import monitorTools
 
 class Trial():
 	def __init__(self, eccentricity, orientation, stimPositionAngles):
@@ -72,12 +73,16 @@ class OrientationDiscriminationTester():
 		self.setupBlocks()
 
 	def setupMonitor(self):
+		physicalSize = monitorTools.getPhysicalSize()
+		resolution = monitorTools.getResolution()
+
 		self.mon = monitors.Monitor('testMonitor')
 		self.mon.setDistance(self.config['monitor_distance'])  # Measure first to ensure this is correct
-		self.mon.setWidth(self.config['monitor_width'])  # Measure first to ensure this is correct
+		self.mon.setWidth(physicalSize[0]/10)
+		self.mon.setSizePix(resolution)
+		self.mon.save()
 
 		self.win = visual.Window(fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
-		self.mon.setSizePix(self.win.size)
 
 		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=self.config['stimulus_frequency'], size=self.config['stimulus_size'], mask='gauss')
 		fixationVertices = (
