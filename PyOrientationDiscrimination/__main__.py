@@ -82,7 +82,7 @@ class OrientationDiscriminationTester():
 		self.mon.setSizePix(resolution)
 		self.mon.save()
 
-		self.win = visual.Window(fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
+		self.win = visual.Window(size = resolution, fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
 
 		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=self.config['stimulus_frequency'], size=self.config['stimulus_size'], mask='gauss')
 		fixationVertices = (
