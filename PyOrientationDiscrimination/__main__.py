@@ -71,7 +71,7 @@ class OrientationDiscriminationTester():
 		self.setupMonitor()
 		self.setupHUD()
 		self.setupDataFile()
-		
+
 		self.setupBlocks()
 
 	def setupMonitor(self):
@@ -194,7 +194,7 @@ class OrientationDiscriminationTester():
 		instructions += 'If the second image is rotated to the right, press [' + rightKey.upper() + '].\n\n'
 		instructions += 'During the process, keep your gaze fixated on the small cross at the center of the screen.\n\n'
 		instructions += 'If you are uncertain, make a guess.\n\n\nPress any key to start.'
-		
+
 		if not firstTime:
 			instructions = 'These instructions are the same as before.\n\n' + instructions
 
@@ -272,7 +272,7 @@ class OrientationDiscriminationTester():
 			for angle2 in self.config['stimulus_position_angles']:
 				if angle1 != angle2:
 					angleConfigs.append([angle1, angle2])
-		
+
 		self.blocks = []
 		for eccentricity in self.config['eccentricities']:
 			block = {
@@ -288,12 +288,12 @@ class OrientationDiscriminationTester():
 						random.shuffle(possibleAngles)
 
 					block['trials'].append(Trial(eccentricity, orientation, possibleAngles.pop()))
-				
+
 			random.shuffle(block['trials'])
 			self.blocks.append(block)
 
 		random.shuffle(self.blocks)
-		
+
 		for block in self.blocks:
 			logging.debug('Block eccentricity: {eccentricity}'.format(**block))
 			for trial in block['trials']:
@@ -406,7 +406,7 @@ class OrientationDiscriminationTester():
 
 	def getGazePosition(self):
 		pos = None
-		while pos is None: 
+		while pos is None:
 			time.sleep(0.1)
 			pos = self.gazeTracker.getPosition()
 
