@@ -17,6 +17,8 @@ import numpy
 import BestPest, settings, assets
 import monitorTools
 
+import math
+
 class Trial():
 	def __init__(self, eccentricity, orientation, stimPositionAngles):
 		self.eccentricity = eccentricity
@@ -91,6 +93,16 @@ class OrientationDiscriminationTester():
 			(-0.5, 0), (0.5, 0),
 		)
 		self.fixationStim = visual.ShapeStim(self.win, vertices=fixationVertices, lineColor=-1, closeShape=False, size=self.config['fixation_size']/60.0)
+
+		if self.config['wait_for_fixation'] or self.config['render_at_gaze']:
+			self.screenMarkers = PyPupilGazeTracker.PsychoPyVisuals.ScreenMarkers(self.win)
+			self.gazeTracker = PyPupilGazeTracker.GazeTracker.GazeTracker(
+				smoother=PyPupilGazeTracker.smoothing.SimpleDecay(),
+				screenSize=resolution
+			)
+			self.gazeTracker.start()
+		else:
+			self.gazeTracker = None
 
 	def setTopLeftPos(self, stim, pos):
 		# convert pixels to degrees
@@ -336,12 +348,22 @@ class OrientationDiscriminationTester():
 		}
 		self.updateHUD('expectedResp', expectedLabels[whichDirection])
 
+		if self.config['wait_for_fixation']:
+			self.waitForFixation()
+
 		self.stim.ori = trial.orientation
 		for i in range(2):
 			self.stim.pos = (
 				numpy.cos(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 				numpy.sin(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 			)
+
+			if self.config['render_at_gaze']:
+				gazePos = self.getGazePosition()
+				self.stim.pos = [
+					self.stim.pos[0] + gazePos[0],
+					self.stim.pos[1] + gazePos[1]
+				]
 
 			# First half of the stimulus
 			self.config['sitmulusTone'].play() # play the tone
@@ -375,6 +397,21 @@ class OrientationDiscriminationTester():
 		logging.info(f'Response: {logLine}')
 		stepHandler.markResponse(correct)
 
+	def waitForFixation(self, target=[0,0], threshold=3.5):
+		logging.info(f'Waiting for fixation...')
+		distance = threshold * 2
+		while distance > threshold:
+			pos = self.getGazePosition()
+			distance = math.sqrt((target[0]-pos[0])**2 + (target[1]-pos[1])**2)
+
+	def getGazePosition(self):
+		pos = None
+		while pos is None: 
+			time.sleep(0.1)
+			pos = self.gazeTracker.getPosition()
+
+		return PyPupilGazeTracker.PsychoPyVisuals.screenToMonitorCenterDeg(self.mon, pos)
+
 	def start(self):
 		try:
 			self.runBlocks()
@@ -386,6 +423,8 @@ class OrientationDiscriminationTester():
 			logging.critical(exc)
 			self.showFinishedMessage('Something went wrong!\n\nPlease let the research assistant know.')
 
+		if self.gazeTracker is not None:
+			self.gazeTracker.stop()
 
 		self.showFinishedMessage()
 		self.win.close()
@@ -394,5 +433,12 @@ class OrientationDiscriminationTester():
 
 os.makedirs('data', exist_ok=True)
 config = getConfig()
+
+if config['wait_for_fixation'] or config['render_at_gaze']:
+	import PyPupilGazeTracker
+	import PyPupilGazeTracker.smoothing
+	import PyPupilGazeTracker.PsychoPyVisuals
+	import PyPupilGazeTracker.GazeTracker
+
 tester = OrientationDiscriminationTester(config)
 tester.start()

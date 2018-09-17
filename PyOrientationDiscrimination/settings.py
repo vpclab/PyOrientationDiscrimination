@@ -13,11 +13,18 @@ settingGroups = {
 		['Skip settings dialog', False],
 		['Data filename', 'data/OD_{start_time}_{session_id}'],
 	],
+
+	'Gaze tracking': [
+		['Wait for fixation', False],
+		['Render at gaze', False],
+	],
+
 	'Display settings': [
 		['Monitor width (cm)', 40],
 		['Monitor distance (cm)', 57],
 		['Fixation size (arcmin)', 20],
 	],
+
 	'Stimuli settings': [
 		['Eccentricities (degrees)', '2 4 6'],
 		['Orientations (degrees)', '0 45 135'],
@@ -31,6 +38,7 @@ settingGroups = {
 		['Stimulus frequency (cpd)', 6],
 		['Stimulus size (degrees of visual angle)', 4],
 	],
+	
 	'Input settings': [
 		['Rotated left key', 'num_4'],
 		['Rotated right key', 'num_6'],
