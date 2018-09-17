@@ -86,6 +86,23 @@ class OrientationDiscriminationTester():
 
 		self.win = visual.Window(size = resolution, fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
 
+		self.referenceCircles = [
+			visual.Circle(
+				self.win,
+				radius        = self.config['stimulus_size'] * .5,
+				lineColor     = -1,
+				lineWidth     = 5,
+				name          = 'Circle surrounding patch'
+			),
+			visual.Circle(
+				self.win,
+				radius        = self.config['stimulus_size'] * .6,
+				lineColor     = -1,
+				lineWidth     = 5,
+				name          = 'Circle surrounding patch'
+			),
+		]
+
 		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=self.config['stimulus_frequency'], size=self.config['stimulus_size'], mask='gauss')
 		fixationVertices = (
 			(0, -0.5), (0, 0.5),
@@ -155,10 +172,16 @@ class OrientationDiscriminationTester():
 			stim, pos, labelText = hudArgs
 			stim.autoDraw = True
 
+		for circle in self.referenceCircles:
+			circle.autoDraw = True
+
 	def disableHUD(self):
 		for key, hudArgs in self.hudElements.items():
 			stim, pos, labelText = hudArgs
 			stim.autoDraw = False
+
+		for circle in self.referenceCircles:
+			circle.autoDraw = False
 
 	def setupDataFile(self):
 		self.dataFilename = self.config['data_filename'].format(**self.config) + '.csv'
@@ -221,6 +244,7 @@ class OrientationDiscriminationTester():
 				raise UserExit()
 
 	def showFinishedMessage(self, text=None):
+		self.disableHUD()
 		if text is None:
 			text = 'Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.'
 		textStim = visual.TextStim(self.win, text=text, color=-1, wrapWidth=20)
