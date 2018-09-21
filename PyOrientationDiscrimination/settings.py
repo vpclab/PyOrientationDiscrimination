@@ -8,7 +8,7 @@ import psychopy.gui, psychopy.core
 import configparser
 
 settingGroups = {
-	'General settings': [ 
+	'General settings': [
 		['Session ID (ex: Day1_Initials)', ''],
 		['Skip settings dialog', False],
 		['Data filename', 'data/OD_{start_time}_{session_id}'],
@@ -37,8 +37,9 @@ settingGroups = {
 		['Stimulus contrast', 0.5],
 		['Stimulus frequency (cpd)', 6],
 		['Stimulus size (degrees of visual angle)', 4],
+		['Stereo circles', True],
 	],
-	
+
 	'Input settings': [
 		['Rotated left key', 'num_4'],
 		['Rotated right key', 'num_6'],
@@ -93,7 +94,7 @@ def getSettings(defaultSettingsFile='settings.ini', save=None):
 	if save is None:
 		# Only save if this is NOT a custom INI
 		save = (settingsFile == defaultSettingsFile)
-	try: 
+	try:
 		savedInfo = configparser.ConfigParser()
 		savedInfo.read(settingsFile)
 		for _,section in savedInfo.items():
