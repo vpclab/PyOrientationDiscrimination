@@ -172,8 +172,9 @@ class OrientationDiscriminationTester():
 			stim, pos, labelText = hudArgs
 			stim.autoDraw = True
 
-		for circle in self.referenceCircles:
-			circle.autoDraw = True
+		if self.config['stereo_circles']:
+			for circle in self.referenceCircles:
+				circle.autoDraw = True
 
 	def disableHUD(self):
 		for key, hudArgs in self.hudElements.items():
