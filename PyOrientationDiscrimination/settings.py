@@ -16,7 +16,12 @@ settingGroups = {
 
 	'Gaze tracking': [
 		['Wait for fixation', False],
+		['Max wait time (s)', 10],
+		['Gaze offset max (degrees)', 1.5],
+		['Fixation period (seconds)', .3],
 		['Render at gaze', False],
+		['Retries', 3],
+		['Show gaze', False],
 	],
 
 	'Display settings': [
@@ -45,6 +50,7 @@ settingGroups = {
 		['Rotated right key', 'num_6'],
 		['Rotated left key label', '1'],
 		['Rotated right key label', '2'],
+		['Wait for ready key', True],
 	]
 }
 
