@@ -59,6 +59,7 @@ def getConfig():
 	config['sitmulusTone'] = getSound('600Hz_square_25.wav', 600, .185)
 	config['positiveFeedback'] = getSound('1000Hz_sine_50.wav', 1000, .077)
 	config['negativeFeedback'] = getSound('300Hz_sine_25.wav', 300, .2)
+	config['gazeTone'] = getSound('hurt.wav', 200, .2)
 
 	return config
 
@@ -118,6 +119,7 @@ class OrientationDiscriminationTester():
 				screenSize=resolution
 			)
 			self.gazeTracker.start()
+			self.gazeMarker = PyPupilGazeTracker.PsychoPyVisuals.FixationStim(self.win, size=self.config['gaze_offset_max'], units='deg', autoDraw=False)
 		else:
 			self.gazeTracker = None
 
@@ -207,6 +209,16 @@ class OrientationDiscriminationTester():
 		)
 		return BestPest.BestPest(stimSpace)
 
+	def showMessage(self, msg):
+		instructionsStim = visual.TextStim(self.win, text=msg, color=-1, wrapWidth=40)
+		instructionsStim.draw()
+
+		self.win.flip()
+
+		keys = event.waitKeys()
+		if 'escape' in keys:
+			raise UserExit()
+
 	def showInstructions(self, firstTime=False):
 		leftKey = self.config['rotated_left_key_label']
 		rightKey = self.config['rotated_right_key_label']
@@ -221,40 +233,10 @@ class OrientationDiscriminationTester():
 		if not firstTime:
 			instructions = 'These instructions are the same as before.\n\n' + instructions
 
-		instructionsStim = visual.TextStim(self.win, text=instructions, color=-1, wrapWidth=40)
-		instructionsStim.draw()
-
-		self.win.flip()
-
-		keys = event.waitKeys()
-		if 'escape' in keys:
-			raise UserExit()
+		self.showMessage(instructions)
 
 	def takeABreak(self, waitForKey=True):
-		instructions = 'Good job - it\'s now time for a break!\n\nWhen you are ready to continue, press the [SPACEBAR].'
-		instructionsStim = visual.TextStim(self.win, text=instructions, color=-1, wrapWidth=20)
-		instructionsStim.draw()
-
-		self.win.flip()
-
-		keys = []
-		while waitForKey and (not 'space' in keys):
-			keys = event.waitKeys()
-			if 'escape' in keys:
-				raise UserExit()
-
-	def showFinishedMessage(self, text=None):
-		self.disableHUD()
-		if text is None:
-			text = 'Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.'
-		textStim = visual.TextStim(self.win, text=text, color=-1, wrapWidth=20)
-		textStim.draw()
-
-		self.win.flip()
-
-		keys = []
-		while not ('space' in keys or 'escape' in keys):
-			keys = event.waitKeys()
+		showMessage('Good job - it\'s now time for a break!\n\nWhen you are ready to continue, press the [SPACEBAR].')
 
 	def checkResponse(self, whichDirection):
 		leftKey = self.config['rotated_left_key']
@@ -335,7 +317,6 @@ class OrientationDiscriminationTester():
 			# Run each trial in this block
 			self.enableHUD()
 			for trial in block['trials']:
-				self.fixationStim.draw()
 				self.win.flip()
 				time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between trials
 				self.runTrial(trial, stepHandlers[trial.orientation])
@@ -358,7 +339,6 @@ class OrientationDiscriminationTester():
 		orientationOffset = stepHandler.next()
 
 		logging.info(f'Presenting eccentricity={trial.eccentricity}, orientation={trial.orientation}, stimAngleOffset={orientationOffset}')
-		print(f'Presenting eccentricity={trial.eccentricity}, orientation={trial.orientation}, stimAngleOffset={orientationOffset}')
 
 		whichDirection = random.choice([-1, 1])
 		logging.info(f'Correct direction = {whichDirection}')
@@ -372,61 +352,122 @@ class OrientationDiscriminationTester():
 		}
 		self.updateHUD('expectedResp', expectedLabels[whichDirection])
 
-		if self.config['wait_for_fixation']:
-			self.waitForFixation()
+		retries = 0
+		needToRetry = True
+		while retries <= self.config['retries'] and needToRetry:
+			retries += 1
 
-		self.stim.ori = trial.orientation
-		for i in range(2):
-			self.stim.pos = (
-				numpy.cos(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
-				numpy.sin(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
-			)
+			if self.config['wait_for_ready_key']:
+				self.waitForReadyKey()
 
-			if self.config['render_at_gaze']:
-				gazePos = self.getGazePosition()
-				self.stim.pos = [
-					self.stim.pos[0] + gazePos[0],
-					self.stim.pos[1] + gazePos[1]
-				]
-
-			# First half of the stimulus
-			self.config['sitmulusTone'].play() # play the tone
-			self.stim.draw()
+			self.fixationStim.draw()
 			self.win.flip()
+			time.sleep(.5)
+			if self.config['wait_for_fixation']:
+				if not self.waitForFixation():
+					needToRetry = True
+					self.config['gazeTone'].play()
+					continue
 
-			time.sleep(self.config['stimulus_duration']/1000.0)
+			needToRetry = False
 
-			# Pause between stimuli in this pair
-			self.win.flip()
-			if i == 0:
-				self.stim.ori += orientationOffset * whichDirection
-				time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between stimuli
+			self.stim.ori = trial.orientation
+			for i in range(2):
+				self.stim.pos = (
+					numpy.cos(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
+					numpy.sin(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
+				)
 
+				if self.config['wait_for_fixation']:
+					gazePos = self.getGazePosition()
+					gazeAngle = math.sqrt(gazePos[0]**2 + gazePos[1]**2)
 
-		correct = self.checkResponse(whichDirection)
-		self.updateHUD('lastStim', stimString)
-		self.updateHUD('thisStim', '')
+					logging.info(f'Gaze pos: {gazePos}')
+					logging.info(f'Gaze angle: {gazeAngle}')
+					if gazeAngle > self.config['gaze_offset_max']:
+						self.config['gazeTone'].play()
+						logging.info('Participant looked away!')
+						needToRetry = True
+						continue
 
-		if correct:
-			logging.debug('Correct response')
-			self.updateHUD('lastOk', '✔', (-1, 1, -1))
-			self.config['positiveFeedback'].play()
-		else:
-			logging.debug('Incorrect response')
-			self.updateHUD('lastOk', '✘', (1, -1, -1))
-			self.config['negativeFeedback'].play()
+				if self.config['render_at_gaze']:
+					gazePos = self.getGazePosition()
+					logging.info(f'Gaze pos: {gazePos}')
+					self.stim.pos = [
+						self.stim.pos[0] + gazePos[0],
+						self.stim.pos[1] + gazePos[1]
+					]
+
+				# First half of the stimulus
+				self.config['sitmulusTone'].play() # play the tone
+				self.stim.draw()
+				self.win.flip()
+
+				time.sleep(self.config['stimulus_duration']/1000.0)
+
+				# Pause between stimuli in this pair
+				self.win.flip()
+				if i == 0:
+					self.stim.ori += orientationOffset * whichDirection
+					time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between stimuli
+
+		if not needToRetry:
+			correct = self.checkResponse(whichDirection)
+			self.updateHUD('lastStim', stimString)
+			self.updateHUD('thisStim', '')
+
+			if correct:
+				logging.debug('Correct response')
+				self.updateHUD('lastOk', '✔', (-1, 1, -1))
+				self.config['positiveFeedback'].play()
+			else:
+				logging.debug('Incorrect response')
+				self.updateHUD('lastOk', '✘', (1, -1, -1))
+				self.config['negativeFeedback'].play()
+
+		if retries > self.config['retries']:
+			raise Exception('Max retries exceeded!')
 
 		self.win.flip()
 		logLine = f'E={trial.eccentricity},O={trial.orientation}+{orientationOffset},Correct={correct}'
 		logging.info(f'Response: {logLine}')
 		stepHandler.markResponse(correct)
 
-	def waitForFixation(self, target=[0,0], threshold=3.5):
+	def waitForReadyKey(self):
+		self.showMessage('Ready?')
+
+	def waitForFixation(self, target=[0,0]):
 		logging.info(f'Waiting for fixation...')
-		distance = threshold * 2
-		while distance > threshold:
+		distance = self.config['gaze_offset_max'] + 1
+		startTime = time.time()
+		fixationStartTime = None
+
+		self.fixationStim.autoDraw = True
+		fixated = None
+		
+		while fixated is None:
+			currentTime = time.time()
 			pos = self.getGazePosition()
+			print(pos)
+			self.gazeMarker.pos = pos
+			if self.config['show_gaze']:
+				self.gazeMarker.draw()
+			self.win.flip()
+
 			distance = math.sqrt((target[0]-pos[0])**2 + (target[1]-pos[1])**2)
+			if distance < self.config['gaze_offset_max']:
+				if fixationStartTime is None:
+					fixationStartTime = currentTime
+				elif currentTime - fixationStartTime > self.config['fixation_period']:
+					fixated = True
+			else:
+				fixationStartTime = None
+
+			if time.time() - startTime > self.config['max_wait_time']:
+				fixated = False
+
+		self.fixationStim.autoDraw = False
+		return fixated
 
 	def getGazePosition(self):
 		pos = None
@@ -445,12 +486,12 @@ class OrientationDiscriminationTester():
 			print(exc)
 			traceback.print_exc()
 			logging.critical(exc)
-			self.showFinishedMessage('Something went wrong!\n\nPlease let the research assistant know.')
+			self.showMessage('Something went wrong!\n\nPlease let the research assistant know.')
 
 		if self.gazeTracker is not None:
 			self.gazeTracker.stop()
 
-		self.showFinishedMessage()
+		self.showMessage('Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.')
 		self.win.close()
 		event.clearEvents()
 		core.quit()
