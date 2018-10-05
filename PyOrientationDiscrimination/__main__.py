@@ -248,7 +248,14 @@ class OrientationDiscriminationTester():
 		self.showMessage(instructions)
 
 	def takeABreak(self, waitForKey=True):
+		for circle in self.referenceCircles:
+			circle.autoDraw = False
+
 		showMessage('Good job - it\'s now time for a break!\n\nWhen you are ready to continue, press the [SPACEBAR].')
+
+		if self.config['stereo_circles']:
+			for circle in self.referenceCircles:
+				circle.autoDraw = True
 
 	def checkResponse(self, whichDirection):
 		leftKey = self.config['rotated_left_key']
@@ -511,6 +518,8 @@ class OrientationDiscriminationTester():
 			self.gazeTracker.stop()
 
 		for stim in self.stayFixationStim:
+			stim.autoDraw = False
+		for stim in self.referenceCircles:
 			stim.autoDraw = False
 		self.showMessage('Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.')
 		self.win.close()
