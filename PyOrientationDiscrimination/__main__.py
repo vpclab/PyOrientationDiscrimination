@@ -111,6 +111,17 @@ class OrientationDiscriminationTester():
 			(-0.5, 0), (0.5, 0),
 		)
 		self.fixationStim = visual.ShapeStim(self.win, vertices=fixationVertices, lineColor=-1, closeShape=False, size=self.config['fixation_size']/60.0)
+		self.stayFixationStim = [
+			visual.Circle(self.win,
+				radius = self.config['gaze_offset_max'] * .5,
+				lineColor = 'black',
+				fillColor = None,
+			), visual.Circle(self.win,
+				radius = self.config['gaze_offset_max'] * .1,
+				lineColor = None,
+				fillColor = 'black',
+			)
+		]
 
 		if self.config['wait_for_fixation'] or self.config['render_at_gaze']:
 			self.screenMarkers = PyPupilGazeTracker.PsychoPyVisuals.ScreenMarkers(self.win)
@@ -361,7 +372,11 @@ class OrientationDiscriminationTester():
 			if self.config['wait_for_ready_key']:
 				self.waitForReadyKey()
 
-			self.fixationStim.draw()
+			if self.config['show_circular_fixation']:
+				for stim in self.stayFixationStim:
+					stim.autoDraw = True
+			else:
+				self.fixationStim.draw()
 			self.win.flip()
 			time.sleep(.5)
 			if self.config['wait_for_fixation']:
@@ -434,6 +449,9 @@ class OrientationDiscriminationTester():
 		logging.info(f'Response: {logLine}')
 		stepHandler.markResponse(correct)
 
+		for stim in self.stayFixationStim:
+			stim.autoDraw = False
+
 	def waitForReadyKey(self):
 		self.showMessage('Ready?')
 
@@ -445,7 +463,7 @@ class OrientationDiscriminationTester():
 
 		self.fixationStim.autoDraw = True
 		fixated = None
-		
+
 		while fixated is None:
 			currentTime = time.time()
 			pos = self.getGazePosition()
@@ -492,6 +510,8 @@ class OrientationDiscriminationTester():
 		if self.gazeTracker is not None:
 			self.gazeTracker.stop()
 
+		for stim in self.stayFixationStim:
+			stim.autoDraw = False
 		self.showMessage('Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.')
 		self.win.close()
 		event.clearEvents()
