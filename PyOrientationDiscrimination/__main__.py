@@ -45,16 +45,17 @@ def getSound(filename, freq, duration):
 		return sound.Sound(freq, secs=duration)
 
 def getConfig():
-	config = settings.getSettings('OrientationDiscrimination Settings.ini')
-	config['start_time'] = data.getDateStr()
-	logFile = config['data_filename'].format(**config) + '.log'
+	config = settings.getSettings()
+	config['General settings']['start_time'] = data.getDateStr()
+	logFile = config['General settings']['data_filename'].format(**config['General settings']) + '.log'
 	logging.basicConfig(filename=logFile, level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-	for k in ['eccentricities', 'orientations', 'stimulus_position_angles']:
-		if isinstance(config[k], str):
-			config[k] = [float(v) for v in config[k].split(' ')]
-		else:
-			config[k] = [float(config[k])]
+	# group = 'Stimuli settings'
+	# for k in ['eccentricities', 'orientations', 'stimulus_position_angles']:
+	# 	if isinstance(config[group][k], str):
+	# 		config[group][k] = [float(v) for v in config[group][k].split(' ')]
+	# 	else:
+	# 		config[group][k] = [float(config[group][k])]
 
 	config['sitmulusTone'] = getSound('600Hz_square_25.wav', 600, .185)
 	config['positiveFeedback'] = getSound('1000Hz_sine_50.wav', 1000, .077)
@@ -80,7 +81,7 @@ class OrientationDiscriminationTester():
 		resolution = monitorTools.getResolution()
 
 		self.mon = monitors.Monitor('testMonitor')
-		self.mon.setDistance(self.config['monitor_distance'])  # Measure first to ensure this is correct
+		self.mon.setDistance(self.config['Display settings']['monitor_distance'])  # Measure first to ensure this is correct
 		self.mon.setWidth(physicalSize[0]/10)
 		self.mon.setSizePix(resolution)
 		self.mon.save()
@@ -90,47 +91,47 @@ class OrientationDiscriminationTester():
 		self.referenceCircles = [
 			visual.Circle(
 				self.win,
-				radius        = self.config['stimulus_size'] * .5,
+				radius        = self.config['Stimuli settings']['stimulus_size'] * .5,
 				lineColor     = -1,
 				lineWidth     = 5,
 				name          = 'Circle surrounding patch'
 			),
 			visual.Circle(
 				self.win,
-				radius        = self.config['stimulus_size'] * .6,
+				radius        = self.config['Stimuli settings']['stimulus_size'] * .6,
 				lineColor     = -1,
 				lineWidth     = 5,
 				name          = 'Circle surrounding patch'
 			),
 		]
 
-		self.stim = visual.GratingStim(self.win, contrast=self.config['stimulus_contrast'], sf=self.config['stimulus_frequency'], size=self.config['stimulus_size'], mask='gauss')
+		self.stim = visual.GratingStim(self.win, contrast=self.config['Stimuli settings']['stimulus_contrast'], sf=self.config['Stimuli settings']['stimulus_frequency'], size=self.config['Stimuli settings']['stimulus_size'], mask='gauss')
 		fixationVertices = (
 			(0, -0.5), (0, 0.5),
 			(0, 0),
 			(-0.5, 0), (0.5, 0),
 		)
-		self.fixationStim = visual.ShapeStim(self.win, vertices=fixationVertices, lineColor=-1, closeShape=False, size=self.config['fixation_size']/60.0)
+		self.fixationStim = visual.ShapeStim(self.win, vertices=fixationVertices, lineColor=-1, closeShape=False, size=self.config['Display settings']['fixation_size']/60.0)
 		self.stayFixationStim = [
 			visual.Circle(self.win,
-				radius = self.config['gaze_offset_max'] * .5,
+				radius = self.config['Gaze tracking']['gaze_offset_max'] * .5,
 				lineColor = 'black',
 				fillColor = None,
 			), visual.Circle(self.win,
-				radius = self.config['gaze_offset_max'] * .1,
+				radius = self.config['Gaze tracking']['gaze_offset_max'] * .1,
 				lineColor = None,
 				fillColor = 'black',
 			)
 		]
 
-		if self.config['wait_for_fixation'] or self.config['render_at_gaze']:
+		if self.config['Gaze tracking']['wait_for_fixation'] or self.config['Gaze tracking']['render_at_gaze']:
 			self.screenMarkers = PyPupilGazeTracker.PsychoPyVisuals.ScreenMarkers(self.win)
 			self.gazeTracker = PyPupilGazeTracker.GazeTracker.GazeTracker(
 				smoother=PyPupilGazeTracker.smoothing.SimpleDecay(),
 				screenSize=resolution
 			)
 			self.gazeTracker.start()
-			self.gazeMarker = PyPupilGazeTracker.PsychoPyVisuals.FixationStim(self.win, size=self.config['gaze_offset_max'], units='deg', autoDraw=False)
+			self.gazeMarker = PyPupilGazeTracker.PsychoPyVisuals.FixationStim(self.win, size=self.config['Gaze tracking']['gaze_offset_max'], units='deg', autoDraw=False)
 		else:
 			self.gazeTracker = None
 
@@ -185,7 +186,7 @@ class OrientationDiscriminationTester():
 			stim, pos, labelText = hudArgs
 			stim.autoDraw = True
 
-		if self.config['stereo_circles']:
+		if self.config['Stimuli settings']['stereo_circles']:
 			for circle in self.referenceCircles:
 				circle.autoDraw = True
 
@@ -198,7 +199,7 @@ class OrientationDiscriminationTester():
 			circle.autoDraw = False
 
 	def setupDataFile(self):
-		self.dataFilename = self.config['data_filename'].format(**self.config) + '.csv'
+		self.dataFilename = self.config['General settings']['data_filename'].format(**self.config['General settings']) + '.csv'
 		logging.info(f'Starting data file {self.dataFilename}')
 
 		if not os.path.exists(self.dataFilename):
@@ -215,9 +216,9 @@ class OrientationDiscriminationTester():
 
 	def setupStepHandler(self):
 		stimSpace = numpy.arange(
-			self.config['stimulus_angle_precision'], # minimum
-			self.config['max_stimulus_angle'] + self.config['stimulus_angle_precision'], # maximum + 1
-			self.config['stimulus_angle_precision'] # precision
+			self.config['Stimuli settings']['stimulus_angle_precision'], # minimum
+			self.config['Stimuli settings']['max_stimulus_angle'] + self.config['Stimuli settings']['stimulus_angle_precision'], # maximum + 1
+			self.config['Stimuli settings']['stimulus_angle_precision'] # precision
 		)
 		return BestPest.BestPest(stimSpace)
 
@@ -232,8 +233,8 @@ class OrientationDiscriminationTester():
 			raise UserExit()
 
 	def showInstructions(self, firstTime=False):
-		leftKey = self.config['rotated_left_key_label']
-		rightKey = self.config['rotated_right_key_label']
+		leftKey = self.config['Input settings']['rotated_left_key_label']
+		rightKey = self.config['Input settings']['rotated_right_key_label']
 
 		instructions = 'In this experiment, you will be presented with two images, one at a time and in different locations.\n\n'
 		instructions += 'The second image is the same as the first except rotated slightly to the left or slightly to the right.\n\n'
@@ -258,21 +259,25 @@ class OrientationDiscriminationTester():
 				circle.autoDraw = True
 
 	def checkResponse(self, whichDirection):
-		leftKey = self.config['rotated_left_key']
-		rightKey = self.config['rotated_right_key']
+		leftKey = self.config['Input settings']['rotated_left_key']
+		rightKey = self.config['Input settings']['rotated_right_key']
+		print(f'{leftKey} - {rightKey}')
 
-		leftKeyLabel = self.config['rotated_left_key_label']
-		rightKeyLabel = self.config['rotated_right_key_label']
+		leftKeyLabel = self.config['Input settings']['rotated_left_key_label']
+		rightKeyLabel = self.config['Input settings']['rotated_right_key_label']
 
 		correct = None
 		while correct is None:
 			keys = event.waitKeys()
 			logging.debug(f'Keys detected: {keys}')
+			print(f'Keys detected: {keys}')
 			if leftKey in keys:
+				print('left')
 				self.updateHUD('lastResp', leftKeyLabel)
 				logging.info(f'User selected left ({leftKey})')
 				correct = (whichDirection < 0)
 			if rightKey in keys:
+				print('right')
 				self.updateHUD('lastResp', rightKeyLabel)
 				logging.info(f'User selected right ({rightKey})')
 				correct = (whichDirection > 0)
@@ -293,21 +298,21 @@ class OrientationDiscriminationTester():
 		'''
 
 		angleConfigs = []
-		for angle1 in self.config['stimulus_position_angles']:
-			for angle2 in self.config['stimulus_position_angles']:
+		for angle1 in self.config['Stimuli settings']['stimulus_position_angles']:
+			for angle2 in self.config['Stimuli settings']['stimulus_position_angles']:
 				if angle1 != angle2:
 					angleConfigs.append([angle1, angle2])
 
 		self.blocks = []
-		for eccentricity in self.config['eccentricities']:
+		for eccentricity in self.config['Stimuli settings']['eccentricities']:
 			block = {
 				'eccentricity': eccentricity,
 				'trials': [],
 			}
-			for orientation in self.config['orientations']:
+			for orientation in self.config['Stimuli settings']['orientations']:
 				possibleAngles = []
 
-				for configTrial in range(self.config['trials_per_stimulus_config']):
+				for configTrial in range(self.config['Stimuli settings']['trials_per_stimulus_config']):
 					if len(possibleAngles) == 0:
 						possibleAngles = list(angleConfigs)
 						random.shuffle(possibleAngles)
@@ -328,7 +333,7 @@ class OrientationDiscriminationTester():
 		for blockCounter, block in enumerate(self.blocks):
 			# Setup a step handler for each orientation
 			stepHandlers = {}
-			for orientation in self.config['orientations']:
+			for orientation in self.config['Stimuli settings']['orientations']:
 				stepHandlers[orientation] = self.setupStepHandler()
 
 			# Show instructions
@@ -337,12 +342,12 @@ class OrientationDiscriminationTester():
 			self.enableHUD()
 			for trial in block['trials']:
 				self.win.flip()
-				time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between trials
+				time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between trials
 				self.runTrial(trial, stepHandlers[trial.orientation])
 
 			self.disableHUD()
 			# Write output
-			for orientation in self.config['orientations']:
+			for orientation in self.config['Stimuli settings']['orientations']:
 				result = stepHandlers[orientation].getBestPest()
 				self.writeOutput(block['eccentricity'], orientation, result)
 
@@ -366,27 +371,27 @@ class OrientationDiscriminationTester():
 		self.updateHUD('thisStim', stimString)
 
 		expectedLabels = {
-			-1: self.config['rotated_left_key_label'],
-			1: self.config['rotated_right_key_label'],
+			-1: self.config['Input settings']['rotated_left_key_label'],
+			1: self.config['Input settings']['rotated_right_key_label'],
 		}
 		self.updateHUD('expectedResp', expectedLabels[whichDirection])
 
 		retries = 0
 		needToRetry = True
-		while retries <= self.config['retries'] and needToRetry:
+		while retries <= self.config['Gaze tracking']['retries'] and needToRetry:
 			retries += 1
 
-			if self.config['wait_for_ready_key']:
+			if self.config['Input settings']['wait_for_ready_key']:
 				self.waitForReadyKey()
 
-			if self.config['show_circular_fixation']:
+			if self.config['Gaze tracking']['show_circular_fixation']:
 				for stim in self.stayFixationStim:
 					stim.autoDraw = True
 			else:
 				self.fixationStim.draw()
 			self.win.flip()
 			time.sleep(.5)
-			if self.config['wait_for_fixation']:
+			if self.config['Gaze tracking']['wait_for_fixation']:
 				if not self.waitForFixation():
 					needToRetry = True
 					self.config['gazeTone'].play()
@@ -401,19 +406,19 @@ class OrientationDiscriminationTester():
 					numpy.sin(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 				)
 
-				if self.config['wait_for_fixation']:
+				if self.config['Gaze tracking']['wait_for_fixation']:
 					gazePos = self.getGazePosition()
 					gazeAngle = math.sqrt(gazePos[0]**2 + gazePos[1]**2)
 
 					logging.info(f'Gaze pos: {gazePos}')
 					logging.info(f'Gaze angle: {gazeAngle}')
-					if gazeAngle > self.config['gaze_offset_max']:
+					if gazeAngle > self.config['Gaze tracking']['gaze_offset_max']:
 						self.config['gazeTone'].play()
 						logging.info('Participant looked away!')
 						needToRetry = True
 						continue
 
-				if self.config['render_at_gaze']:
+				if self.config['Gaze tracking']['render_at_gaze']:
 					gazePos = self.getGazePosition()
 					logging.info(f'Gaze pos: {gazePos}')
 					self.stim.pos = [
@@ -426,13 +431,13 @@ class OrientationDiscriminationTester():
 				self.stim.draw()
 				self.win.flip()
 
-				time.sleep(self.config['stimulus_duration']/1000.0)
+				time.sleep(self.config['Stimuli settings']['stimulus_duration']/1000.0)
 
 				# Pause between stimuli in this pair
 				self.win.flip()
 				if i == 0:
 					self.stim.ori += orientationOffset * whichDirection
-					time.sleep(self.config['time_between_stimuli'] / 1000.0)     # pause between stimuli
+					time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between stimuli
 
 		if not needToRetry:
 			correct = self.checkResponse(whichDirection)
@@ -448,7 +453,7 @@ class OrientationDiscriminationTester():
 				self.updateHUD('lastOk', '✘', (1, -1, -1))
 				self.config['negativeFeedback'].play()
 
-		if retries > self.config['retries']:
+		if retries > self.config['Gaze tracking']['retries']:
 			raise Exception('Max retries exceeded!')
 
 		self.win.flip()
@@ -464,7 +469,7 @@ class OrientationDiscriminationTester():
 
 	def waitForFixation(self, target=[0,0]):
 		logging.info(f'Waiting for fixation...')
-		distance = self.config['gaze_offset_max'] + 1
+		distance = self.config['Gaze tracking']['gaze_offset_max'] + 1
 		startTime = time.time()
 		fixationStartTime = None
 
@@ -476,20 +481,20 @@ class OrientationDiscriminationTester():
 			pos = self.getGazePosition()
 			print(pos)
 			self.gazeMarker.pos = pos
-			if self.config['show_gaze']:
+			if self.config['Gaze tracking']['show_gaze']:
 				self.gazeMarker.draw()
 			self.win.flip()
 
 			distance = math.sqrt((target[0]-pos[0])**2 + (target[1]-pos[1])**2)
-			if distance < self.config['gaze_offset_max']:
+			if distance < self.config['Gaze tracking']['gaze_offset_max']:
 				if fixationStartTime is None:
 					fixationStartTime = currentTime
-				elif currentTime - fixationStartTime > self.config['fixation_period']:
+				elif currentTime - fixationStartTime > self.config['Gaze tracking']['fixation_period']:
 					fixated = True
 			else:
 				fixationStartTime = None
 
-			if time.time() - startTime > self.config['max_wait_time']:
+			if time.time() - startTime > self.config['Gaze tracking']['max_wait_time']:
 				fixated = False
 
 		self.fixationStim.autoDraw = False
@@ -529,7 +534,7 @@ class OrientationDiscriminationTester():
 os.makedirs('data', exist_ok=True)
 config = getConfig()
 
-if config['wait_for_fixation'] or config['render_at_gaze']:
+if config['Gaze tracking']['wait_for_fixation'] or config['Gaze tracking']['render_at_gaze']:
 	import PyPupilGazeTracker
 	import PyPupilGazeTracker.smoothing
 	import PyPupilGazeTracker.PsychoPyVisuals
