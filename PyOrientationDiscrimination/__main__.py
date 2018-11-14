@@ -254,10 +254,6 @@ class OrientationDiscriminationTester():
 
 		self.showMessage('Good job - it\'s now time for a break!\n\nWhen you are ready to continue, press the [SPACEBAR].')
 
-		if self.config['Stimuli settings']['stereo_circles']:
-			for circle in self.referenceCircles:
-				circle.autoDraw = True
-
 	def checkResponse(self, whichDirection):
 		leftKey = self.config['Input settings']['rotated_left_key']
 		rightKey = self.config['Input settings']['rotated_right_key']
@@ -371,6 +367,11 @@ class OrientationDiscriminationTester():
 			# Show instructions
 			self.showInstructions(blockCounter==0)
 			# Run each trial in this block
+			if self.config['Stimuli settings']['stereo_circles']:
+				for circle in self.referenceCircles:
+					circle.autoDraw = True
+
+
 			self.enableHUD()
 			for trial in block['trials']:
 				self.win.flip()
