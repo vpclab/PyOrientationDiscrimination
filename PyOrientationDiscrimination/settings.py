@@ -8,6 +8,10 @@ SETTINGS_GROUP = [
 	ConfigGroup('General settings',
 		Setting('Session ID',                         str, '', helpText='ex: Day1_Initials'),
 		Setting('Data filename',                      str, 'data/OD_{start_time}_{session_id}'),
+		Setting('Practice',             bool,   False),
+		Setting('Practice streak',      int, 8,  helpText='The number of trials the participant must get right out of the past {history} for the program to end'),
+		Setting('Practice history',     int, 10, helpText='The number of trials the program looks at when looking for a streak'),
+		Setting('Separate blocks by',   str, 'Orientations', allowedValues=['Orientations', 'Eccentricities']),
 
 	), ConfigGroup('Gaze tracking',
 		Setting('Wait for fixation',                  bool,  False),

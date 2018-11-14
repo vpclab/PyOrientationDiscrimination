@@ -252,16 +252,15 @@ class OrientationDiscriminationTester():
 		for circle in self.referenceCircles:
 			circle.autoDraw = False
 
-		showMessage('Good job - it\'s now time for a break!\n\nWhen you are ready to continue, press the [SPACEBAR].')
+		self.showMessage('Good job - it\'s now time for a break!\n\nWhen you are ready to continue, press the [SPACEBAR].')
 
-		if self.config['stereo_circles']:
+		if self.config['Stimuli settings']['stereo_circles']:
 			for circle in self.referenceCircles:
 				circle.autoDraw = True
 
 	def checkResponse(self, whichDirection):
 		leftKey = self.config['Input settings']['rotated_left_key']
 		rightKey = self.config['Input settings']['rotated_right_key']
-		print(f'{leftKey} - {rightKey}')
 
 		leftKeyLabel = self.config['Input settings']['rotated_left_key_label']
 		rightKeyLabel = self.config['Input settings']['rotated_right_key_label']
@@ -270,14 +269,11 @@ class OrientationDiscriminationTester():
 		while correct is None:
 			keys = event.waitKeys()
 			logging.debug(f'Keys detected: {keys}')
-			print(f'Keys detected: {keys}')
 			if leftKey in keys:
-				print('left')
 				self.updateHUD('lastResp', leftKeyLabel)
 				logging.info(f'User selected left ({leftKey})')
 				correct = (whichDirection < 0)
 			if rightKey in keys:
-				print('right')
 				self.updateHUD('lastResp', rightKeyLabel)
 				logging.info(f'User selected right ({rightKey})')
 				correct = (whichDirection > 0)
@@ -287,6 +283,21 @@ class OrientationDiscriminationTester():
 			event.clearEvents()
 
 		return correct
+
+	def getBlockAndNonBlock(self):
+		blockSeparatorKey = self.config['General settings']['separate_blocks_by'].lower()
+		if blockSeparatorKey == 'orientations':
+			nonBlockedKey = 'eccentricities'
+		else:
+			nonBlockedKey = 'orientations'
+
+		return blockSeparatorKey, nonBlockedKey
+
+	def blockVarsToEccentricityAndOrientation(self, blockVarName, blockVarValue, nonBlockVarValue):
+		if blockVarName == 'eccentricities':
+			return blockVarValue, nonBlockVarValue
+		else:
+			return nonBlockVarValue, blockVarValue
 
 	def setupBlocks(self):
 		'''
@@ -304,12 +315,22 @@ class OrientationDiscriminationTester():
 					angleConfigs.append([angle1, angle2])
 
 		self.blocks = []
+		self.stepHandlers = {}
 		for eccentricity in self.config['Stimuli settings']['eccentricities']:
+			self.stepHandlers[eccentricity] = {}
+			for orientation in self.config['Stimuli settings']['orientations']:
+				self.stepHandlers[eccentricity][orientation] = self.setupStepHandler()
+
+		blockSeparatorKey, nonBlockedKey = self.getBlockAndNonBlock()
+		for blockValue in self.config['Stimuli settings'][blockSeparatorKey]:
 			block = {
-				'eccentricity': eccentricity,
+				'blockBy': blockSeparatorKey,
+				'blockValue': blockValue,
 				'trials': [],
 			}
-			for orientation in self.config['Stimuli settings']['orientations']:
+
+			for nonBlockedValue in self.config['Stimuli settings'][nonBlockedKey]:
+				eccentricity, orientation = self.blockVarsToEccentricityAndOrientation(blockSeparatorKey, blockValue, nonBlockedValue)
 				possibleAngles = []
 
 				for configTrial in range(self.config['Stimuli settings']['trials_per_stimulus_config']):
@@ -324,18 +345,29 @@ class OrientationDiscriminationTester():
 
 		random.shuffle(self.blocks)
 
+		if self.config['General settings']['practice']:
+			self.history = [0] * self.config['General settings']['practice_history']
+			combinedBlock = {
+				'blockBy': None,
+				'blockValue': None,
+				'trials': []
+			}
+
+			for block in self.blocks:
+				combinedBlock['trials'] += block['trials']
+
+			random.shuffle(combinedBlock['trials'])
+			self.blocks = [combinedBlock]
+
 		for block in self.blocks:
-			logging.debug('Block eccentricity: {eccentricity}'.format(**block))
+			logging.debug('Block by {blockBy}:{blockValue}'.format(**block))
 			for trial in block['trials']:
 				logging.debug(f'\t{trial}')
 
 	def runBlocks(self):
-		for blockCounter, block in enumerate(self.blocks):
-			# Setup a step handler for each orientation
-			stepHandlers = {}
-			for orientation in self.config['Stimuli settings']['orientations']:
-				stepHandlers[orientation] = self.setupStepHandler()
+		blockSeparatorKey, nonBlockedKey = self.getBlockAndNonBlock()
 
+		for blockCounter, block in enumerate(self.blocks):
 			# Show instructions
 			self.showInstructions(blockCounter==0)
 			# Run each trial in this block
@@ -343,13 +375,26 @@ class OrientationDiscriminationTester():
 			for trial in block['trials']:
 				self.win.flip()
 				time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between trials
-				self.runTrial(trial, stepHandlers[trial.orientation])
+				self.runTrial(trial, self.stepHandlers[trial.eccentricity][trial.orientation])
+
+				if self.config['General settings']['practice']:
+					if sum(self.history) >= self.config['General settings']['practice_streak']:
+						logging.info('Practice completed!')
+						break
 
 			self.disableHUD()
+
 			# Write output
-			for orientation in self.config['Stimuli settings']['orientations']:
-				result = stepHandlers[orientation].getBestPest()
-				self.writeOutput(block['eccentricity'], orientation, result)
+			if self.config['General settings']['practice']:
+				for eccentricity, eccDicts in self.stepHandlers.items():
+					for orientation, stepHandler in eccDicts.items():
+						result = self.stepHandlers[eccentricity][orientation].getBestPest()
+						self.writeOutput(eccentricity, orientation, result)
+			else:
+				for nonBlockedValue in self.config['Stimuli settings'][nonBlockedKey]:
+					eccentricity, orientation = self.blockVarsToEccentricityAndOrientation(blockSeparatorKey, block['blockValue'], nonBlockedValue)
+					result = self.stepHandlers[eccentricity][orientation].getBestPest()
+					self.writeOutput(eccentricity, orientation, result)
 
 			# Take a break if it's time
 			self.win.flip()
@@ -464,6 +509,10 @@ class OrientationDiscriminationTester():
 		for stim in self.stayFixationStim:
 			stim.autoDraw = False
 
+		if self.config['General settings']['practice']:
+			self.history.pop(0)
+			self.history.append(1 if correct else 0)
+
 	def waitForReadyKey(self):
 		self.showMessage('Ready?')
 
@@ -479,7 +528,6 @@ class OrientationDiscriminationTester():
 		while fixated is None:
 			currentTime = time.time()
 			pos = self.getGazePosition()
-			print(pos)
 			self.gazeMarker.pos = pos
 			if self.config['Gaze tracking']['show_gaze']:
 				self.gazeMarker.draw()
@@ -514,7 +562,7 @@ class OrientationDiscriminationTester():
 		except UserExit as exc:
 			logging.info(exc)
 		except Exception as exc:
-			print(exc)
+			print('Exception: %s' % exc)
 			traceback.print_exc()
 			logging.critical(exc)
 			self.showMessage('Something went wrong!\n\nPlease let the research assistant know.')
