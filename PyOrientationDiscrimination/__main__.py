@@ -362,6 +362,7 @@ class OrientationDiscriminationTester():
 
 	def runBlocks(self):
 		blockSeparatorKey, nonBlockedKey = self.getBlockAndNonBlock()
+		practiceWentOk = False
 
 		for blockCounter, block in enumerate(self.blocks):
 			# Show instructions
@@ -381,6 +382,7 @@ class OrientationDiscriminationTester():
 				if self.config['General settings']['practice']:
 					if sum(self.history) >= self.config['General settings']['practice_streak']:
 						logging.info('Practice completed!')
+						practiceWentOk = True
 						break
 
 			self.disableHUD()
@@ -404,6 +406,10 @@ class OrientationDiscriminationTester():
 				self.takeABreak()
 
 		logging.debug('User is done!')
+		if self.config['General settings']['practice']:
+			return practiceWentOk
+		else:
+			return True
 
 	def runTrial(self, trial, stepHandler):
 		orientationOffset = stepHandler.next()
@@ -558,11 +564,17 @@ class OrientationDiscriminationTester():
 		return PyPupilGazeTracker.PsychoPyVisuals.screenToMonitorCenterDeg(self.mon, pos)
 
 	def start(self):
+		exitCode = 0
 		try:
-			self.runBlocks()
+			if not self.runBlocks():
+				logging.critical('Participant failed practice')
+				exitCode = 66
 		except UserExit as exc:
+			exitCode = 2
 			logging.info(exc)
 		except Exception as exc:
+			exitCode = 1
+
 			print('Exception: %s' % exc)
 			traceback.print_exc()
 			logging.critical(exc)
@@ -575,10 +587,11 @@ class OrientationDiscriminationTester():
 			stim.autoDraw = False
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
+
 		self.showMessage('Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.')
 		self.win.close()
 		event.clearEvents()
-		core.quit()
+		core.quit(exitCode)
 
 os.makedirs('data', exist_ok=True)
 config = getConfig()
