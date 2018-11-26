@@ -138,7 +138,7 @@ class OrientationDiscriminationTester():
 						visual.Circle(
 							self.win,
 							pos=pos,
-							radius = .7 * self.config['Stimuli settings']['stimulus_size'],
+							radius = .7 * monitorTools.scaleSizeByEccentricity(self.config['Stimuli settings']['stimulus_size'], eccentricity),
 							lineColor = self.config['Display settings']['annuli_color'],
 							fillColor = None,
 							units = 'deg'
@@ -162,7 +162,7 @@ class OrientationDiscriminationTester():
 							self.win,
 							image=maskImagePath,
 							pos=pos,
-							size=[size,size],
+							size=monitorTools.scaleSizeByEccentricity(size, eccentricity),
 						)
 					)
 
@@ -501,6 +501,7 @@ class OrientationDiscriminationTester():
 					numpy.cos(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 					numpy.sin(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 				)
+				self.stim.size = monitorTools.scaleSizeByEccentricity(self.config['Stimuli settings']['stimulus_size'], trial.eccentricity)
 
 				if self.config['Gaze tracking']['wait_for_fixation']:
 					gazePos = self.getGazePosition()
@@ -671,8 +672,6 @@ class OrientationDiscriminationTester():
 		if self.gazeTracker is not None:
 			self.gazeTracker.stop()
 
-		for stim in self.stayFixationStim:
-			stim.autoDraw = False
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
 
