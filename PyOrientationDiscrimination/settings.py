@@ -24,8 +24,11 @@ SETTINGS_GROUP = [
 		Setting('Show circular fixation',             bool,  False),
 
 	), ConfigGroup('Display settings',
-		Setting('Monitor distance',                   int,   57,  minimum = 2, maximum = 100, helpText='In cm'),
-		Setting('Fixation size',                      int,   20,  helpText='In arcmin'),
+		Setting('Monitor distance',                   int,   57,        minimum = 2, maximum = 100, helpText='In cm'),
+		Setting('Fixation size',                      int,   20,        helpText='In arcmin'),
+		Setting('Show fixation aid',                  bool,  False),
+		Setting('Show annuli',                        bool,  False),
+		Setting('Annuli color',                       str,   '#ffffff', helpText='Web-safe names or hex codes (#4f2cff)'),
 
 	), ConfigGroup('Stimuli settings',
 		Setting('Eccentricities',                     typing.List[int], [2, 4, 6],            helpText='In degrees'),
@@ -40,6 +43,7 @@ SETTINGS_GROUP = [
 		Setting('Stimulus frequency',                 int, 6,                                 helpText='In cycles per degree'),
 		Setting('Stimulus size',                      int, 4,                                 helpText='In degrees of visual angle'),
 		Setting('Stereo circles',                     bool, True),
+		Setting('Mask time',                          int, 0,                                 helpText='In ms'),
 
 	), ConfigGroup('Input settings',
 		Setting('Rotated left key',                   str, 'num_4'),

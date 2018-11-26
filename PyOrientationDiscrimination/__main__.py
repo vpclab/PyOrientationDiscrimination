@@ -112,7 +112,7 @@ class OrientationDiscriminationTester():
 			(-0.5, 0), (0.5, 0),
 		)
 		self.fixationStim = visual.ShapeStim(self.win, vertices=fixationVertices, lineColor=-1, closeShape=False, size=self.config['Display settings']['fixation_size']/60.0)
-		self.stayFixationStim = [
+		self.fixationAid = [
 			visual.Circle(self.win,
 				radius = self.config['Gaze tracking']['gaze_offset_max'] * .5,
 				lineColor = 'black',
@@ -123,6 +123,48 @@ class OrientationDiscriminationTester():
 				fillColor = 'black',
 			)
 		]
+
+		if self.config['Display settings']['show_annuli']:
+			self.annuli = {}
+			for eccentricity in self.config['Stimuli settings']['eccentricities']:
+				self.annuli[eccentricity] = []
+
+				for angle in self.config['Stimuli settings']['stimulus_position_angles']:
+					pos = [
+						numpy.cos(angle * numpy.pi/180.0) * eccentricity,
+						numpy.sin(angle * numpy.pi/180.0) * eccentricity,
+					]
+					self.annuli[eccentricity].append(
+						visual.Circle(
+							self.win,
+							pos=pos,
+							radius = .7 * self.config['Stimuli settings']['stimulus_size'],
+							lineColor = self.config['Display settings']['annuli_color'],
+							fillColor = None,
+							units = 'deg'
+						)
+					)
+
+		if self.config['Stimuli settings']['mask_time'] > 0:
+			self.masks = {}
+			size = self.config['Stimuli settings']['stimulus_size']
+			maskImagePath = assets.getFilePath(os.path.join('assets', 'PyOrientationDiscrimination', 'mask.png'))
+
+			for eccentricity in self.config['Stimuli settings']['eccentricities']:
+				self.masks[eccentricity] = []
+				for angle in self.config['Stimuli settings']['stimulus_position_angles']:
+					pos = [
+						numpy.cos(angle * numpy.pi/180.0) * eccentricity,
+						numpy.sin(angle * numpy.pi/180.0) * eccentricity,
+					]
+					self.masks[eccentricity].append(
+						visual.ImageStim(
+							self.win,
+							image=maskImagePath,
+							pos=pos,
+							size=[size,size],
+						)
+					)
 
 		if self.config['Gaze tracking']['wait_for_fixation'] or self.config['Gaze tracking']['render_at_gaze']:
 			self.screenMarkers = PyPupilGazeTracker.PsychoPyVisuals.ScreenMarkers(self.win)
@@ -434,13 +476,15 @@ class OrientationDiscriminationTester():
 			retries += 1
 
 			if self.config['Input settings']['wait_for_ready_key']:
+				self.drawAnnuli(trial.eccentricity)
 				self.waitForReadyKey()
 
 			if self.config['Gaze tracking']['show_circular_fixation']:
-				for stim in self.stayFixationStim:
-					stim.autoDraw = True
+				self.drawFixationAid()
 			else:
 				self.fixationStim.draw()
+
+			self.drawAnnuli(trial.eccentricity)
 			self.win.flip()
 			time.sleep(.5)
 			if self.config['Gaze tracking']['wait_for_fixation']:
@@ -481,15 +525,29 @@ class OrientationDiscriminationTester():
 				# First half of the stimulus
 				self.config['sitmulusTone'].play() # play the tone
 				self.stim.draw()
+				self.drawFixationAid()
+				self.drawAnnuli(trial.eccentricity)
 				self.win.flip()
 
 				time.sleep(self.config['Stimuli settings']['stimulus_duration']/1000.0)
 
-				# Pause between stimuli in this pair
+				self.applyMasks(trial.eccentricity)
+				self.drawFixationAid()
+				self.drawAnnuli(trial.eccentricity)
 				self.win.flip()
+
+				# Pause between stimuli in this pair
 				if i == 0:
 					self.stim.ori += orientationOffset * whichDirection
 					time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between stimuli
+
+		if self.config['Display settings']['show_fixation_aid']:
+			self.drawFixationAid()
+		else:
+			self.fixationStim.draw()
+
+		self.drawAnnuli(trial.eccentricity)
+		self.win.flip()
 
 		if not needToRetry:
 			correct = self.checkResponse(whichDirection)
@@ -513,12 +571,42 @@ class OrientationDiscriminationTester():
 		logging.info(f'Response: {logLine}')
 		stepHandler.markResponse(correct)
 
-		for stim in self.stayFixationStim:
-			stim.autoDraw = False
+		self.drawFixationAid()
 
 		if self.config['General settings']['practice']:
 			self.history.pop(0)
 			self.history.append(1 if correct else 0)
+
+	def applyMasks(self, eccentricity=None):
+		if self.config['Stimuli settings']['mask_time'] > 0:
+			if eccentricity is None:
+				eccentricities = self.annuli.keys()
+			else:
+				eccentricities = [eccentricity]
+
+			for ecc in eccentricities:
+				for mask in self.masks[ecc]:
+					mask.draw()
+
+			self.drawFixationAid()
+			self.drawAnnuli(eccentricity)
+			self.win.flip()
+			time.sleep(self.config['Stimuli settings']['mask_time']/1000)
+
+	def drawFixationAid(self):
+		if self.config['Display settings']['show_fixation_aid']:
+			[_.draw() for _ in self.fixationAid]
+
+	def drawAnnuli(self, eccentricity=None):
+		if self.config['Display settings']['show_annuli']:
+			if eccentricity is None:
+				eccentricities = self.annuli.keys()
+			else:
+				eccentricities = [eccentricity]
+
+			for eccentricity in eccentricities:
+				for circle in self.annuli[eccentricity]:
+					circle.draw()
 
 	def waitForReadyKey(self):
 		self.showMessage('Ready?')
