@@ -1,4 +1,5 @@
 .vscode/
+*.ini
 data/
 logs/
 figs/
