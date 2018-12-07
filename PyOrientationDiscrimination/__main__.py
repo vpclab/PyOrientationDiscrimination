@@ -115,12 +115,12 @@ class OrientationDiscriminationTester():
 		self.fixationAid = [
 			visual.Circle(self.win,
 				radius = self.config['Gaze tracking']['gaze_offset_max'] * .5,
-				lineColor = 'black',
+				lineColor = self.config['Display settings']['fixation_color'],
 				fillColor = None,
 			), visual.Circle(self.win,
 				radius = self.config['Gaze tracking']['gaze_offset_max'] * .1,
+				fillColor = self.config['Display settings']['fixation_color'],
 				lineColor = None,
-				fillColor = 'black',
 			)
 		]
 

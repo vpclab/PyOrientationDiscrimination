@@ -27,6 +27,7 @@ SETTINGS_GROUP = [
 		Setting('Monitor distance',                   int,   57,        minimum = 2, maximum = 100, helpText='In cm'),
 		Setting('Fixation size',                      int,   20,        helpText='In arcmin'),
 		Setting('Show fixation aid',                  bool,  False),
+		Setting('Fixation color',                     str,   'black', helpText='Web-safe names or hex codes (#4f2cff)'),
 		Setting('Show annuli',                        bool,  False),
 		Setting('Annuli color',                       str,   '#ffffff', helpText='Web-safe names or hex codes (#4f2cff)'),
 
