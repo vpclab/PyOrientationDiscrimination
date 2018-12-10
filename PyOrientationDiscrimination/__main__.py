@@ -7,15 +7,15 @@ import logging
 from functools import partial
 from collections import OrderedDict
 
+import BestPest, settings, assets
+import monitorTools
+
 import psychopy
 
 psychopy.prefs.general['audioLib'] = ['pyo','pygame', 'sounddevice']
 
 from psychopy import core, visual, gui, data, event, monitors, sound, tools
 import numpy
-
-import BestPest, settings, assets
-import monitorTools
 
 import math
 

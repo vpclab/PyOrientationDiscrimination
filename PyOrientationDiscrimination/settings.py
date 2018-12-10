@@ -57,7 +57,4 @@ SETTINGS_GROUP = [
 ]
 
 def getSettings(filename = f'{PROGRAM_NAME}-settings.ini'):
-	print(filename)
-	if QApplication.instance() is None:
-		_ = QApplication(['tmpApplication'])
 	return ConfigHelper(SETTINGS_GROUP, filename).getSettings()
