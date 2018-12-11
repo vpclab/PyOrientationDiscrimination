@@ -87,6 +87,8 @@ class OrientationDiscriminationTester():
 		self.mon.save()
 
 		self.win = visual.Window(size = resolution, fullscr=True, monitor='testMonitor', allowGUI=False, units='deg')
+		self.background = visual.Rect(self.win, size=[dim*2 for dim in resolution], units='pix', color=self.config['Display settings']['background_color'])
+		self.flipBuffer()
 
 		self.referenceCircles = [
 			visual.Circle(
@@ -196,8 +198,8 @@ class OrientationDiscriminationTester():
 
 	def setupHUD(self):
 		lineHeight = 40
-		xOffset = 225
-		yOffset = 10
+		xOffset = 180
+		yOffset = 70
 
 		self.hudElements = OrderedDict(
 			lastStim = [visual.TextStim(self.win, text=' '), [xOffset, 0 + yOffset], 'Last stim'],
@@ -211,7 +213,7 @@ class OrientationDiscriminationTester():
 			stim, pos, labelText = self.hudElements[key]
 			if labelText is not None:
 				label = visual.TextStim(self.win, text=labelText+':')
-				pos = [30, pos[1]]
+				pos = [10, pos[1]]
 				self.hudElements[key+'_label'] = [label, pos, None]
 
 		for key in list(self.hudElements):
@@ -240,6 +242,10 @@ class OrientationDiscriminationTester():
 		for circle in self.referenceCircles:
 			circle.autoDraw = False
 
+	def flipBuffer(self):
+		self.win.flip()
+		self.background.draw()
+
 	def setupDataFile(self):
 		self.dataFilename = self.config['General settings']['data_filename'].format(**self.config['General settings']) + '.csv'
 		logging.info(f'Starting data file {self.dataFilename}')
@@ -264,15 +270,33 @@ class OrientationDiscriminationTester():
 		)
 		return BestPest.BestPest(stimSpace)
 
-	def showMessage(self, msg):
-		instructionsStim = visual.TextStim(self.win, text=msg, color=-1, wrapWidth=40)
-		instructionsStim.draw()
+	def doCalibration(self):
+		self.disableHUD()
+		self.showMessage('Looks like you need to be re-calibrated!\nFollow the circle around the next screen.\nPress SPACE to begin.')
+		self.gazeTracker.doCalibration()
+		time.sleep(1)
+		self.enableHUD()
 
-		self.win.flip()
+	def showMessage(self, msg, exceptionOnEsc=True):
+		keepWaiting = True
 
-		keys = event.waitKeys()
-		if 'escape' in keys:
-			raise UserExit()
+		while keepWaiting:
+			instructionsStim = visual.TextStim(self.win, text=msg, color=-1, wrapWidth=40)
+			instructionsStim.draw()
+			self.flipBuffer()
+			
+			keys = event.waitKeys()
+			if 'c' in keys and self.gazeTracker is not None:
+				self.doCalibration()
+			else:
+				keepWaiting = False
+
+			if 'escape' in keys:
+				if exceptionOnEsc:
+					raise UserExit()
+				else:
+					keepWaiting = False
+
 
 	def showInstructions(self, firstTime=False):
 		leftKey = self.config['Input settings']['rotated_left_key_label']
@@ -417,7 +441,7 @@ class OrientationDiscriminationTester():
 
 			self.enableHUD()
 			for trial in block['trials']:
-				self.win.flip()
+				self.flipBuffer()
 				time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between trials
 				self.runTrial(trial, self.stepHandlers[trial.eccentricity][trial.orientation])
 
@@ -442,7 +466,7 @@ class OrientationDiscriminationTester():
 					self.writeOutput(eccentricity, orientation, result)
 
 			# Take a break if it's time
-			self.win.flip()
+			self.flipBuffer()
 			if blockCounter < len(self.blocks)-1:
 				logging.debug('Break time')
 				self.takeABreak()
@@ -470,10 +494,13 @@ class OrientationDiscriminationTester():
 		}
 		self.updateHUD('expectedResp', expectedLabels[whichDirection])
 
-		retries = 0
+		retries = -1
 		needToRetry = True
-		while retries <= self.config['Gaze tracking']['retries'] and needToRetry:
+		while retries < self.config['Gaze tracking']['retries'] and needToRetry:
 			retries += 1
+
+			if retries > 1 and (retries % self.config['Gaze tracking']['retries_to_trigger_calibration']) == 0 and self.gazeTracker is not None:
+				self.doCalibration()
 
 			if self.config['Input settings']['wait_for_ready_key']:
 				self.drawAnnuli(trial.eccentricity)
@@ -485,7 +512,7 @@ class OrientationDiscriminationTester():
 				self.fixationStim.draw()
 
 			self.drawAnnuli(trial.eccentricity)
-			self.win.flip()
+			self.flipBuffer()
 			time.sleep(.5)
 			if self.config['Gaze tracking']['wait_for_fixation']:
 				if not self.waitForFixation():
@@ -528,14 +555,14 @@ class OrientationDiscriminationTester():
 				self.stim.draw()
 				self.drawFixationAid()
 				self.drawAnnuli(trial.eccentricity)
-				self.win.flip()
+				self.flipBuffer()
 
 				time.sleep(self.config['Stimuli settings']['stimulus_duration']/1000.0)
 
 				self.applyMasks(trial.eccentricity)
 				self.drawFixationAid()
 				self.drawAnnuli(trial.eccentricity)
-				self.win.flip()
+				self.flipBuffer()
 
 				# Pause between stimuli in this pair
 				if i == 0:
@@ -548,7 +575,7 @@ class OrientationDiscriminationTester():
 			self.fixationStim.draw()
 
 		self.drawAnnuli(trial.eccentricity)
-		self.win.flip()
+		self.flipBuffer()
 
 		if not needToRetry:
 			correct = self.checkResponse(whichDirection)
@@ -567,7 +594,7 @@ class OrientationDiscriminationTester():
 		if retries > self.config['Gaze tracking']['retries']:
 			raise Exception('Max retries exceeded!')
 
-		self.win.flip()
+		self.flipBuffer()
 		logLine = f'E={trial.eccentricity},O={trial.orientation}+{orientationOffset},Correct={correct}'
 		logging.info(f'Response: {logLine}')
 		stepHandler.markResponse(correct)
@@ -591,7 +618,7 @@ class OrientationDiscriminationTester():
 
 			self.drawFixationAid()
 			self.drawAnnuli(eccentricity)
-			self.win.flip()
+			self.flipBuffer()
 			time.sleep(self.config['Stimuli settings']['mask_time']/1000)
 
 	def drawFixationAid(self):
@@ -624,33 +651,34 @@ class OrientationDiscriminationTester():
 		while fixated is None:
 			currentTime = time.time()
 			pos = self.getGazePosition()
-			self.gazeMarker.pos = pos
-			if self.config['Gaze tracking']['show_gaze']:
-				self.gazeMarker.draw()
-			self.win.flip()
+			if pos is not None:
+				self.gazeMarker.pos = pos
+				if self.confi['Gaze tracking']['show_gaze']:
+					self.gazeMarker.draw()
+				self.flipBuffer()
 
-			distance = math.sqrt((target[0]-pos[0])**2 + (target[1]-pos[1])**2)
-			if distance < self.config['Gaze tracking']['gaze_offset_max']:
-				if fixationStartTime is None:
-					fixationStartTime = currentTime
-				elif currentTime - fixationStartTime > self.config['Gaze tracking']['fixation_period']:
-					fixated = True
-			else:
-				fixationStartTime = None
+				distance = math.sqrt((target[0]-pos[0])**2 + (target[1]-pos[1])**2)
+				if distance < self.config['Gaze tracking']['gaze_offset_max']:
+					if fixationStartTime is None:
+						fixationStartTime = currentTime
+					elif currentTime - fixationStartTime > self.config['Gaze tracking']['fixation_period']:
+						fixated = True
+				else:
+					fixationStartTime = None
 
 			if time.time() - startTime > self.config['Gaze tracking']['max_wait_time']:
 				fixated = False
+				print('yo done!')
 
 		self.fixationStim.autoDraw = False
 		return fixated
 
 	def getGazePosition(self):
-		pos = None
-		while pos is None:
-			time.sleep(0.1)
-			pos = self.gazeTracker.getPosition()
-
-		return PyPupilGazeTracker.PsychoPyVisuals.screenToMonitorCenterDeg(self.mon, pos)
+		pos = self.gazeTracker.getPosition()
+		if pos is None:
+			return
+		else:
+			return PyPupilGazeTracker.PsychoPyVisuals.screenToMonitorCenterDeg(self.mon, pos)
 
 	def start(self):
 		exitCode = 0
@@ -667,7 +695,7 @@ class OrientationDiscriminationTester():
 			print('Exception: %s' % exc)
 			traceback.print_exc()
 			logging.critical(exc)
-			self.showMessage('Something went wrong!\n\nPlease let the research assistant know.')
+			self.showMessage('Something went wrong!\n\nPlease let the research assistant know.\n\n%s' % exc, exceptionOnEsc=False)
 
 		if self.gazeTracker is not None:
 			self.gazeTracker.stop()
@@ -675,7 +703,7 @@ class OrientationDiscriminationTester():
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
 
-		self.showMessage('Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.')
+		self.showMessage('Good job - you are finished with this part of the study!\n\nPress the [SPACEBAR] to exit.', exceptionOnEsc=False)
 		self.win.close()
 		event.clearEvents()
 		core.quit(exitCode)
