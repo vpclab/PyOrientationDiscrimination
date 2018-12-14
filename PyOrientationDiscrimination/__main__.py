@@ -271,31 +271,34 @@ class OrientationDiscriminationTester():
 		return BestPest.BestPest(stimSpace)
 
 	def doCalibration(self):
-		self.disableHUD()
+		self.gazeTracker.cobreCommander.openShutter()
 		self.showMessage('Looks like you need to be re-calibrated!\nFollow the circle around the next screen.\nPress SPACE to begin.')
-		self.gazeTracker.doCalibration()
+		self.gazeTracker.doCalibration(shutterCloseAfterCalibration=True)
 		time.sleep(1)
-		self.enableHUD()
 
 	def showMessage(self, msg, exceptionOnEsc=True):
 		keepWaiting = True
 
 		while keepWaiting:
+			self.getGazePosition() # throw this away
+
 			instructionsStim = visual.TextStim(self.win, text=msg, color=-1, wrapWidth=40)
 			instructionsStim.draw()
 			self.flipBuffer()
 			
-			keys = event.waitKeys()
-			if 'c' in keys and self.gazeTracker is not None:
-				self.doCalibration()
-			else:
-				keepWaiting = False
-
-			if 'escape' in keys:
-				if exceptionOnEsc:
-					raise UserExit()
+			keys = event.getKeys()
+			keyPressed = len(keys) > 0
+			if keyPressed:
+				if 'c' in keys and self.gazeTracker is not None:
+					self.doCalibration()
 				else:
 					keepWaiting = False
+
+				if 'escape' in keys:
+					if exceptionOnEsc:
+						raise UserExit()
+					else:
+						keepWaiting = False
 
 
 	def showInstructions(self, firstTime=False):
@@ -638,6 +641,7 @@ class OrientationDiscriminationTester():
 
 	def waitForReadyKey(self):
 		self.showMessage('Ready?')
+		self.gazeTracker.cobreCommander.closeShutter()
 
 	def waitForFixation(self, target=[0,0]):
 		logging.info(f'Waiting for fixation...')
