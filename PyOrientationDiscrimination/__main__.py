@@ -8,6 +8,7 @@ from functools import partial
 from collections import OrderedDict
 
 import BestPest, settings, assets
+from MonitorShutter import ShutterController
 import monitorTools
 
 import psychopy
@@ -271,7 +272,7 @@ class OrientationDiscriminationTester():
 		return BestPest.BestPest(stimSpace)
 
 	def doCalibration(self):
-		self.gazeTracker.cobreCommander.openShutter()
+		self.cobreCommander.openShutter()
 		self.showMessage('Looks like you need to be re-calibrated!\nFollow the circle around the next screen.\nPress SPACE to begin.')
 		self.gazeTracker.doCalibration(shutterCloseAfterCalibration=True)
 		time.sleep(1)
@@ -279,8 +280,8 @@ class OrientationDiscriminationTester():
 	def showMessage(self, msg, exceptionOnEsc=True):
 		keepWaiting = True
 
-		while keepWaiting:
-			self.getGazePosition() # throw this away
+			if self.gazeTracker is not None:
+				self.getGazePosition() # throw this value away, we just need to keep the gaze tracker pumping messages
 
 			instructionsStim = visual.TextStim(self.win, text=msg, color=-1, wrapWidth=40)
 			instructionsStim.draw()
@@ -641,7 +642,7 @@ class OrientationDiscriminationTester():
 
 	def waitForReadyKey(self):
 		self.showMessage('Ready?')
-		self.gazeTracker.cobreCommander.closeShutter()
+		self.cobreCommander.closeShutter()
 
 	def waitForFixation(self, target=[0,0]):
 		logging.info(f'Waiting for fixation...')
