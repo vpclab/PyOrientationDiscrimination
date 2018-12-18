@@ -175,10 +175,14 @@ class OrientationDiscriminationTester():
 				smoother=PyPupilGazeTracker.smoothing.SimpleDecay(),
 				screenSize=resolution
 			)
-			self.gazeTracker.start()
+			self.gazeTracker.start(closeShutter=False)
 			self.gazeMarker = PyPupilGazeTracker.PsychoPyVisuals.FixationStim(self.win, size=self.config['Gaze tracking']['gaze_offset_max'], units='deg', autoDraw=False)
+			self.cobreCommander = self.gazeTracker.cobreCommander
 		else:
 			self.gazeTracker = None
+			self.cobreCommander = ShutterController()
+
+		self.trial = None
 
 	def setTopLeftPos(self, stim, pos):
 		# convert pixels to degrees
@@ -199,7 +203,7 @@ class OrientationDiscriminationTester():
 
 	def setupHUD(self):
 		lineHeight = 40
-		xOffset = 180
+		xOffset = 190
 		yOffset = 70
 
 		self.hudElements = OrderedDict(
@@ -280,6 +284,7 @@ class OrientationDiscriminationTester():
 	def showMessage(self, msg, exceptionOnEsc=True):
 		keepWaiting = True
 
+		while keepWaiting:
 			if self.gazeTracker is not None:
 				self.getGazePosition() # throw this value away, we just need to keep the gaze tracker pumping messages
 
@@ -317,6 +322,7 @@ class OrientationDiscriminationTester():
 			instructions = 'These instructions are the same as before.\n\n' + instructions
 
 		self.showMessage(instructions)
+		self.cobreCommander.closeShutter()
 
 	def takeABreak(self, waitForKey=True):
 		for circle in self.referenceCircles:
@@ -482,6 +488,7 @@ class OrientationDiscriminationTester():
 			return True
 
 	def runTrial(self, trial, stepHandler):
+		self.trial = trial
 		orientationOffset = stepHandler.next()
 
 		logging.info(f'Presenting eccentricity={trial.eccentricity}, orientation={trial.orientation}, stimAngleOffset={orientationOffset}')
@@ -490,6 +497,10 @@ class OrientationDiscriminationTester():
 		logging.info(f'Correct direction = {whichDirection}')
 
 		stimString = 'O:%.2f+%.2f, E:%.2f, P:[%.2f, %.2f]' % (trial.orientation, orientationOffset, trial.eccentricity, *trial.stimPositionAngles)
+
+		self.stim.ori = trial.orientation
+		self.stim.size = monitorTools.scaleSizeByEccentricity(self.config['Stimuli settings']['stimulus_size'], trial.eccentricity)
+
 		self.updateHUD('thisStim', stimString)
 
 		expectedLabels = {
@@ -507,10 +518,9 @@ class OrientationDiscriminationTester():
 				self.doCalibration()
 
 			if self.config['Input settings']['wait_for_ready_key']:
-				self.drawAnnuli(trial.eccentricity)
 				self.waitForReadyKey()
 
-			if self.config['Gaze tracking']['show_circular_fixation']:
+			if self.config['Display settings']['show_fixation_aid']:
 				self.drawFixationAid()
 			else:
 				self.fixationStim.draw()
@@ -518,29 +528,34 @@ class OrientationDiscriminationTester():
 			self.drawAnnuli(trial.eccentricity)
 			self.flipBuffer()
 			time.sleep(.5)
+
+			needToRetry = False
+
 			if self.config['Gaze tracking']['wait_for_fixation']:
 				if not self.waitForFixation():
 					needToRetry = True
 					self.config['gazeTone'].play()
 					continue
 
-			needToRetry = False
-
-			self.stim.ori = trial.orientation
 			for i in range(2):
 				self.stim.pos = (
 					numpy.cos(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 					numpy.sin(trial.stimPositionAngles[i] * numpy.pi/180.0) * trial.eccentricity,
 				)
-				self.stim.size = monitorTools.scaleSizeByEccentricity(self.config['Stimuli settings']['stimulus_size'], trial.eccentricity)
 
-				if self.config['Gaze tracking']['wait_for_fixation']:
+				if i == 1 and self.config['Gaze tracking']['wait_for_fixation']:
 					gazePos = self.getGazePosition()
-					gazeAngle = math.sqrt(gazePos[0]**2 + gazePos[1]**2)
+					if gazePos is not None:
+						gazeAngle = math.sqrt(gazePos[0]**2 + gazePos[1]**2)
 
-					logging.info(f'Gaze pos: {gazePos}')
-					logging.info(f'Gaze angle: {gazeAngle}')
-					if gazeAngle > self.config['Gaze tracking']['gaze_offset_max']:
+						logging.info(f'Gaze pos: {gazePos}')
+						logging.info(f'Gaze angle: {gazeAngle}')
+						if gazeAngle > self.config['Gaze tracking']['gaze_offset_max']:
+							self.config['gazeTone'].play()
+							logging.info('Participant looked away!')
+							needToRetry = True
+							continue
+					else:
 						self.config['gazeTone'].play()
 						logging.info('Participant looked away!')
 						needToRetry = True
@@ -642,7 +657,6 @@ class OrientationDiscriminationTester():
 
 	def waitForReadyKey(self):
 		self.showMessage('Ready?')
-		self.cobreCommander.closeShutter()
 
 	def waitForFixation(self, target=[0,0]):
 		logging.info(f'Waiting for fixation...')
@@ -650,7 +664,7 @@ class OrientationDiscriminationTester():
 		startTime = time.time()
 		fixationStartTime = None
 
-		self.fixationStim.autoDraw = True
+		#self.fixationStim.autoDraw = True
 		fixated = None
 
 		while fixated is None:
@@ -658,8 +672,11 @@ class OrientationDiscriminationTester():
 			pos = self.getGazePosition()
 			if pos is not None:
 				self.gazeMarker.pos = pos
-				if self.confi['Gaze tracking']['show_gaze']:
+				if self.config['Gaze tracking']['show_gaze']:
 					self.gazeMarker.draw()
+
+				self.drawFixationAid()
+				self.drawAnnuli(eccentricity=self.trial.eccentricity)
 				self.flipBuffer()
 
 				distance = math.sqrt((target[0]-pos[0])**2 + (target[1]-pos[1])**2)
@@ -675,7 +692,7 @@ class OrientationDiscriminationTester():
 				fixated = False
 				print('yo done!')
 
-		self.fixationStim.autoDraw = False
+		#self.fixationStim.autoDraw = False
 		return fixated
 
 	def getGazePosition(self):
