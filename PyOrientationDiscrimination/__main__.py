@@ -207,10 +207,10 @@ class OrientationDiscriminationTester():
 		yOffset = 10
 
 		self.hudElements = OrderedDict(
-			lastStim = [visual.TextStim(self.win, text=' '), [xOffset, 0 + yOffset], 'Last stim'],
+			lastStim = [visual.TextStim(self.win, text=' '), [xOffset-150, 0 + yOffset], 'Last stim'],
 			lastResp = [visual.TextStim(self.win, text=' '), [xOffset + 40, 6*lineHeight + yOffset], None],
 			lastOk = [visual.TextStim(self.win, text=' '), [xOffset -10, 6*lineHeight + yOffset], 'Last resp'],
-			thisStim = [visual.TextStim(self.win, text=' '), [xOffset, 8*lineHeight + yOffset], 'This stim'],
+			thisStim = [visual.TextStim(self.win, text=' '), [xOffset-150, 8*lineHeight + yOffset], 'This stim'],
 			expectedResp = [visual.TextStim(self.win, text=' '), [xOffset, 14*lineHeight + yOffset], 'Exp resp'],
 		)
 
