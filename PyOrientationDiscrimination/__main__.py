@@ -656,7 +656,7 @@ class OrientationDiscriminationTester():
 					circle.draw()
 
 	def waitForReadyKey(self):
-		self.showMessage('Ready?')
+		self.showMessage('Press [SPACEBAR] when ready.')
 
 	def waitForFixation(self, target=[0,0]):
 		logging.info(f'Waiting for fixation...')
