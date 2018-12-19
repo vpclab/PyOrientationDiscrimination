@@ -203,22 +203,22 @@ class OrientationDiscriminationTester():
 
 	def setupHUD(self):
 		lineHeight = 40
-		xOffset = 190
-		yOffset = 70
+		xOffset = 225
+		yOffset = 10
 
 		self.hudElements = OrderedDict(
 			lastStim = [visual.TextStim(self.win, text=' '), [xOffset, 0 + yOffset], 'Last stim'],
-			lastResp = [visual.TextStim(self.win, text=' '), [xOffset + 40, lineHeight + yOffset], None],
-			lastOk = [visual.TextStim(self.win, text=' '), [xOffset -10, lineHeight + yOffset], 'Last resp'],
-			thisStim = [visual.TextStim(self.win, text=' '), [xOffset, 2*lineHeight + yOffset], 'This stim'],
-			expectedResp = [visual.TextStim(self.win, text=' '), [xOffset, 3*lineHeight + yOffset], 'Exp resp'],
+			lastResp = [visual.TextStim(self.win, text=' '), [xOffset + 40, 6*lineHeight + yOffset], None],
+			lastOk = [visual.TextStim(self.win, text=' '), [xOffset -10, 6*lineHeight + yOffset], 'Last resp'],
+			thisStim = [visual.TextStim(self.win, text=' '), [xOffset, 8*lineHeight + yOffset], 'This stim'],
+			expectedResp = [visual.TextStim(self.win, text=' '), [xOffset, 14*lineHeight + yOffset], 'Exp resp'],
 		)
 
 		for key in list(self.hudElements):
 			stim, pos, labelText = self.hudElements[key]
 			if labelText is not None:
 				label = visual.TextStim(self.win, text=labelText+':')
-				pos = [10, pos[1]]
+				pos = [30, pos[1]]
 				self.hudElements[key+'_label'] = [label, pos, None]
 
 		for key in list(self.hudElements):
@@ -496,7 +496,7 @@ class OrientationDiscriminationTester():
 		whichDirection = random.choice([-1, 1])
 		logging.info(f'Correct direction = {whichDirection}')
 
-		stimString = 'O:%.2f+%.2f, E:%.2f, P:[%.2f, %.2f]' % (trial.orientation, orientationOffset, trial.eccentricity, *trial.stimPositionAngles)
+		stimString = '\nO: %.2f+%.2f,\nE: %.2f,\nP: [%.2f, %.2f]' % (trial.orientation, orientationOffset, trial.eccentricity, *trial.stimPositionAngles)
 
 		self.stim.ori = trial.orientation
 		self.stim.size = monitorTools.scaleSizeByEccentricity(self.config['Stimuli settings']['stimulus_size'], trial.eccentricity)
