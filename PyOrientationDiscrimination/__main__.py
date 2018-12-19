@@ -722,6 +722,8 @@ class OrientationDiscriminationTester():
 		if self.gazeTracker is not None:
 			self.gazeTracker.stop()
 
+		self.cobreCommander.openShutter()
+		
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
 
