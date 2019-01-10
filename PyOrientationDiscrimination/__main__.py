@@ -177,10 +177,10 @@ class OrientationDiscriminationTester():
 			)
 			self.gazeTracker.start(closeShutter=False)
 			self.gazeMarker = PyPupilGazeTracker.PsychoPyVisuals.FixationStim(self.win, size=self.config['Gaze tracking']['gaze_offset_max'], units='deg', autoDraw=False)
-			self.cobreCommander = self.gazeTracker.cobreCommander
 		else:
 			self.gazeTracker = None
-			self.cobreCommander = ShutterController()
+
+		self.cobreCommander = ShutterController()
 
 		self.trial = None
 
@@ -721,8 +721,9 @@ class OrientationDiscriminationTester():
 
 		if self.gazeTracker is not None:
 			self.gazeTracker.stop()
-
-		self.cobreCommander.openShutter()
+		else:
+			self.cobreCommander.openShutter()
+			self.cobreCommander.disconnectFromhost()
 		
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
