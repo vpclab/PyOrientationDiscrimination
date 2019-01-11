@@ -299,14 +299,14 @@ class OrientationDiscriminationTester():
 
 		time.sleep(1)
 
-	def showMessage(self, msg, exceptionOnEsc=True):
+	def showMessage(self, msg, exceptionOnEsc=True, showGaze=True):
 		keepWaiting = True
 		firstRender = True
 
 		messageStim = visual.TextStim(self.win, text=msg, color=-1, wrapWidth=40)
 
 		while keepWaiting:
-			if self.gazeTracker is not None:
+			if showGaze and self.gazeTracker is not None:
 				pos = self.getGazePosition()
 				if pos is not None:
 					self.gazeMarker.pos = pos
@@ -352,7 +352,7 @@ class OrientationDiscriminationTester():
 		if not firstTime:
 			instructions = 'These instructions are the same as before.\n\n' + instructions
 
-		self.showMessage(instructions)
+		self.showMessage(instructions, showGaze=False)
 		self.cobreCommander.closeShutter()
 
 	def takeABreak(self, waitForKey=True):
