@@ -212,6 +212,7 @@ class OrientationDiscriminationTester():
 			lastOk = [visual.TextStim(self.win, text=' '), [xOffset -10, 6*lineHeight + yOffset], 'Last resp'],
 			thisStim = [visual.TextStim(self.win, text=' '), [xOffset-150, 8*lineHeight + yOffset], 'This stim'],
 			expectedResp = [visual.TextStim(self.win, text=' '), [xOffset, 14*lineHeight + yOffset], 'Exp resp'],
+			progress = [visual.TextStim(self.win, text=' '), [xOffset, 18*lineHeight + yOffset], 'Progress'],
 		)
 
 		for key in list(self.hudElements):
@@ -348,7 +349,7 @@ class OrientationDiscriminationTester():
 		instructions += 'If the second image is rotated to the left, press [' + leftKey.upper() + '].\n'
 		instructions += 'If the second image is rotated to the right, press [' + rightKey.upper() + '].\n\n'
 		instructions += 'During the process, keep your gaze fixated on the small cross at the center of the screen.\n\n'
-		instructions += 'If you are uncertain, make a guess.\n\n\nPress any key to start.'
+		instructions += 'If you are uncertain, make a guess.\n\n\nPress [SPACEBAR] to start.'
 
 		if not firstTime:
 			instructions = 'These instructions are the same as before.\n\n' + instructions
@@ -484,7 +485,10 @@ class OrientationDiscriminationTester():
 			self.enableHUD()
 			for trial in block['trials']:
 				self.flipBuffer()
+
 				time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between trials
+
+				self.updateHUD('progress', f'B({blockCounter+1}/{len(self.blocks)}) T({trialCounter+1}/{len(block["trials"])})')
 				self.runTrial(trial, self.stepHandlers[trial.eccentricity][trial.orientation])
 
 				if self.config['General settings']['practice']:
