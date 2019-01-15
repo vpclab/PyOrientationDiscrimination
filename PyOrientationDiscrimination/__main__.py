@@ -348,7 +348,7 @@ class OrientationDiscriminationTester():
 		instructions += 'The second image is the same as the first except rotated slightly to the left or slightly to the right.\n\n'
 		instructions += 'If the second image is rotated to the left, press [' + leftKey.upper() + '].\n'
 		instructions += 'If the second image is rotated to the right, press [' + rightKey.upper() + '].\n\n'
-		instructions += 'During the process, keep your gaze fixated on the small cross at the center of the screen.\n\n'
+		instructions += 'During the process, keep your gaze fixated on the circled-dot at the center of the screen.\n\n'
 		instructions += 'If you are uncertain, make a guess.\n\n\nPress [SPACEBAR] to start.'
 
 		if not firstTime:
@@ -488,7 +488,7 @@ class OrientationDiscriminationTester():
 
 				time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between trials
 
-				self.updateHUD('progress', f'\nB({blockCounter+1}/{len(self.blocks)}) T({trialCounter+1}/{len(block["trials"])})')
+				self.updateHUD('progress', f'\nB({blockCounter+1}/{len(self.blocks)})\nT({trialCounter+1}/{len(block["trials"])})')
 				self.runTrial(trial, self.stepHandlers[trial.eccentricity][trial.orientation])
 
 				if self.config['General settings']['practice']:
