@@ -627,38 +627,35 @@ class OrientationDiscriminationTester():
 					self.stim.ori += orientationOffset * whichDirection
 					time.sleep(self.config['Stimuli settings']['time_between_stimuli'] / 1000.0)     # pause between stimuli
 
-		if self.config['Display settings']['show_fixation_aid']:
-			self.drawFixationAid()
-		else:
-			self.fixationStim.draw()
-
-		self.drawAnnuli(trial.eccentricity)
-		self.flipBuffer()
-
-		if not needToRetry:
-			correct = self.checkResponse(whichDirection)
-			self.updateHUD('lastStim', stimString)
-			self.updateHUD('thisStim', '')
-
-			if correct:
-				logging.debug('Correct response')
-				self.updateHUD('lastOk', '✔', (-1, 1, -1))
-				self.config['positiveFeedback'].play()
+			if self.config['Display settings']['show_fixation_aid']:
+				self.drawFixationAid()
 			else:
-				logging.debug('Incorrect response')
-				self.updateHUD('lastOk', '✘', (1, -1, -1))
-				self.config['negativeFeedback'].play()
+				self.fixationStim.draw()
 
-		if retries > self.config['Gaze tracking']['retries']:
+			self.drawAnnuli(trial.eccentricity)
+			self.flipBuffer()
+
+			if not needToRetry:
+				correct = self.checkResponse(whichDirection)
+				self.updateHUD('lastStim', stimString)
+				self.updateHUD('thisStim', '')
+
+				if correct:
+					logging.debug('Correct response')
+					self.updateHUD('lastOk', '✔', (-1, 1, -1))
+					self.config['positiveFeedback'].play()
+				else:
+					logging.debug('Incorrect response')
+					self.updateHUD('lastOk', '✘', (1, -1, -1))
+					self.config['negativeFeedback'].play()
+
+		if retries >= self.config['Gaze tracking']['retries']:
 			raise Exception('Max retries exceeded!')
 
 		self.flipBuffer()
 		logLine = f'E={trial.eccentricity},O={trial.orientation}+{orientationOffset},Correct={correct}'
 		logging.info(f'Response: {logLine}')
 		stepHandler.markResponse(correct)
-
-		self.drawFixationAid()
-
 		if self.config['General settings']['practice']:
 			self.history.pop(0)
 			self.history.append(1 if correct else 0)
@@ -729,7 +726,6 @@ class OrientationDiscriminationTester():
 
 			if time.time() - startTime > self.config['Gaze tracking']['max_wait_time']:
 				fixated = False
-				print('yo done!')
 
 		#self.fixationStim.autoDraw = False
 		return fixated
