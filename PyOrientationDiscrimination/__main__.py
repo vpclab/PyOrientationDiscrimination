@@ -758,7 +758,7 @@ class OrientationDiscriminationTester():
 			self.gazeTracker.stop()
 		else:
 			self.cobreCommander.openShutter()
-			self.cobreCommander.disconnectFromhost()
+			self.cobreCommander.disconnectFromHost()
 		
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
