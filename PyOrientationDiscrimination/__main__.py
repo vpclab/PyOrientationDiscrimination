@@ -347,11 +347,12 @@ class OrientationDiscriminationTester():
 		leftKey = self.config['Input settings']['rotated_left_key_label']
 		rightKey = self.config['Input settings']['rotated_right_key_label']
 
-		instructions = 'In this experiment, you will be presented with two images, one at a time and in different locations.\n\n'
-		instructions += 'The second image is the same as the first except rotated slightly to the left or slightly to the right.\n\n'
-		instructions += 'If the second image is rotated to the left, press [' + leftKey.upper() + '].\n'
-		instructions += 'If the second image is rotated to the right, press [' + rightKey.upper() + '].\n\n'
-		instructions += 'During the process, keep your gaze fixated on the circled-dot at the center of the screen.\n\n'
+		instructions = 'For this test, you will be presented with two striped circles, one at a time and in different locations.\n\n'
+		instructions += 'The second striped circle is the same as the first except rotated slightly to the left or slightly to the right.\n\n'
+		instructions += 'Sometimes these striped circles will appear in the center of the screen, and sometimes around the center of the screen.\n\n'
+		instructions += 'If the second striped circle is rotated to the counter-clockwise, press [' + leftKey.upper() + '].\n'
+		instructions += 'If the second striped circle is rotated to the clockwise, press [' + rightKey.upper() + '].\n\n'
+		instructions += 'Throughout the test, keep your gaze fixated on the circled-dot at the center of the screen.\n\n'
 		instructions += 'If you are uncertain, make a guess.\n\n\nPress [SPACEBAR] to start.'
 
 		if not firstTime:
