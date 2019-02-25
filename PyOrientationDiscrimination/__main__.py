@@ -166,6 +166,7 @@ class OrientationDiscriminationTester():
 							image=maskImagePath,
 							pos=pos,
 							size=monitorTools.scaleSizeByEccentricity(size, eccentricity),
+							mask='gauss',
 						)
 					)
 
@@ -611,9 +612,9 @@ class OrientationDiscriminationTester():
 
 				# First half of the stimulus
 				self.config['sitmulusTone'].play() # play the tone
-				self.stim.draw()
 				self.drawFixationAid()
 				self.drawAnnuli(trial.eccentricity)
+				self.stim.draw()
 				self.flipBuffer()
 
 				time.sleep(self.config['Stimuli settings']['stimulus_duration']/1000.0)
@@ -663,6 +664,8 @@ class OrientationDiscriminationTester():
 
 	def applyMasks(self, eccentricity=None):
 		if self.config['Stimuli settings']['mask_time'] > 0:
+			self.drawFixationAid()
+			self.drawAnnuli(eccentricity)
 			if eccentricity is None:
 				eccentricities = self.annuli.keys()
 			else:
@@ -672,8 +675,6 @@ class OrientationDiscriminationTester():
 				for mask in self.masks[ecc]:
 					mask.draw()
 
-			self.drawFixationAid()
-			self.drawAnnuli(eccentricity)
 			self.flipBuffer()
 			time.sleep(self.config['Stimuli settings']['mask_time']/1000)
 
