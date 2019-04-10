@@ -3,6 +3,7 @@ import traceback
 import argparse
 import time, random
 import logging
+from pathlib import Path
 
 from functools import partial
 from collections import OrderedDict
@@ -48,7 +49,10 @@ def getSound(filename, freq, duration):
 def getConfig():
 	config = settings.getSettings()
 	config['General settings']['start_time'] = data.getDateStr()
-	logFile = config['General settings']['data_filename'].format(**config['General settings']) + '.log'
+	logFile = os.path.join(
+		Path(config['General settings']['data_path']),
+		config['General settings']['data_filename'].format(**config['General settings']) + '.log'
+	)
 	logging.basicConfig(filename=logFile, level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 	# group = 'Stimuli settings'
@@ -254,7 +258,10 @@ class OrientationDiscriminationTester():
 		self.background.draw()
 
 	def setupDataFile(self):
-		self.dataFilename = self.config['General settings']['data_filename'].format(**self.config['General settings']) + '.csv'
+		self.dataFilename = os.path.join(
+			Path(self.config['General settings']['data_path']),
+			self.config['General settings']['data_filename'].format(**self.config['General settings']) + '.csv'
+		)
 		logging.info(f'Starting data file {self.dataFilename}')
 
 		if not os.path.exists(self.dataFilename):
@@ -289,13 +296,13 @@ class OrientationDiscriminationTester():
 			self.win.flip()
 			os.system('"%s" -m PyPupilGazeTracker.AccuracyChecker' % sys.executable)
 			time.sleep(1)
-			
+
 			# Attempt to bring the window back (doesn't appear to work)
 			self.win.winHandle.maximize()
-			self.win.winHandle.set_fullscreen(True) 
+			self.win.winHandle.set_fullscreen(True)
 			self.win.winHandle.activate()
 			self.win.flip()
-			
+
 			self.cobreCommander.activateLights()
 			self.cobreCommander.closeShutter()
 
@@ -312,7 +319,7 @@ class OrientationDiscriminationTester():
 				pos = self.getGazePosition()
 				if pos is not None:
 					self.gazeMarker.pos = pos
-					
+
 				self.gazeMarker.draw(drawText=False)
 
 			messageStim.draw()
@@ -328,7 +335,7 @@ class OrientationDiscriminationTester():
 				if keyPressed:
 					if 'c' in keys and self.gazeTracker is not None:
 						self.doCalibration(withValidation=True)
-						
+
 					if 'g' in keys:
 						self.config['Gaze tracking']['show_gaze'] = not self.config['Gaze tracking']['show_gaze']
 
@@ -761,7 +768,7 @@ class OrientationDiscriminationTester():
 		else:
 			self.cobreCommander.openShutter()
 			self.cobreCommander.disconnectFromHost()
-		
+
 		for stim in self.referenceCircles:
 			stim.autoDraw = False
 
